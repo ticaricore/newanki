@@ -1,3 +1,5 @@
+import { reportNetwork } from '@/offline/network'
+
 /** Error response shape of the Go API (see server/internal/api/httpx.go). */
 interface ErrorBody {
   error?: { code: string; message: string; fields?: Record<string, string> }
@@ -37,8 +39,11 @@ export async function api<T>(method: Method, path: string, body?: unknown, init?
     })
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e
+    reportNetwork(false)
     throw new ApiError(0, 'network', 'Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.')
   }
+  // A proxy or the service worker answering 502–504 also means the API is out of reach.
+  reportNetwork(res.status < 502 || res.status > 504)
   if (res.status === 204) return undefined as T
   const text = await res.text()
   const data = text ? safeJSON(text) : undefined

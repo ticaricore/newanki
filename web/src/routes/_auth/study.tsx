@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { uuidv7 } from '@/api/client'
-import { decksQuery, qk, queueQuery, settingsQuery, summaryQuery, useReview } from '@/api/queries'
+import { ApiError, uuidv7 } from '@/api/client'
+import { decksQuery, qk, settingsQuery, summaryQuery } from '@/api/queries'
 import type { CardDTO } from '@/api/types.gen'
 import { Icon } from '@/components/icons'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar, TopBarIcon } from '@/components/layout/TopBar'
 import { Button, EmptyState, GlassCard, GlassProgress, Pill, RingProgress, Spinner, StatTile } from '@/components/ui/glass'
 import { CardFace, CardShell } from '@/features/study/CardFaces'
-import { SWIPE_THRESHOLD, intervalAfter, intervalLabel, swipeDecision } from '@/features/study/srs'
-import { duration } from '@/lib/format'
+import { SWIPE_THRESHOLD, intervalAfter, intervalLabel, nextLevel, swipeDecision } from '@/features/study/srs'
+import { ago, duration } from '@/lib/format'
+import { localDueAt } from '@/offline/localSrs'
+import { enqueueAnswer, loadStudyQueue, useSyncState } from '@/offline/sync'
 import type { FlipStyle } from '@/theme/theme'
 
 export const Route = createFileRoute('/_auth/study')({
@@ -20,17 +22,39 @@ export const Route = createFileRoute('/_auth/study')({
 
 function StudyRoute() {
   const { deck_uid } = Route.useSearch()
-  const { data, isPending, isError, refetch } = useQuery(queueQuery(deck_uid))
+  const { me } = Route.useRouteContext()
+  const navigate = useNavigate()
+  // Loaded once per session: online it downloads (and keeps) the queue, offline it uses the kept copy.
+  const { data, error, isPending, refetch } = useQuery({
+    queryKey: ['study-session', me.uid, deck_uid ?? 'all'],
+    queryFn: () => loadStudyQueue(me.uid, deck_uid),
+    staleTime: Infinity,
+    gcTime: 0,
+    retry: false,
+    networkMode: 'always',
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+  const noData = error instanceof ApiError && error.code === 'offline_no_data'
   return (
     <AppShell>
       {isPending ? (
         <div className="flex min-h-dvh items-center justify-center"><Spinner size={24} /></div>
-      ) : isError ? (
-        <div className="px-[18px] pt-24">
-          <EmptyState icon="refresh" title="Kartlar yüklenemedi" action={<Button variant="primary" onClick={() => refetch()}>Tekrar dene</Button>} />
-        </div>
+      ) : error ? (
+        <>
+          <TopBar leading={<TopBarIcon name="close" label="Kapat" onClick={() => navigate({ to: '/' })} />} />
+          <div className="px-[18px] pt-16">
+            <EmptyState
+              icon={noData ? 'wifiOff' : 'refresh'}
+              title={noData ? 'Çevrimdışısın' : 'Kartlar yüklenemedi'}
+              action={<Button variant="primary" onClick={() => refetch()}>Tekrar dene</Button>}
+            >
+              {noData ? 'Bu cihazda çalışmak için indirilmiş kart yok. İnternete bağlanınca kartlar otomatik indirilir.' : error.message}
+            </EmptyState>
+          </div>
+        </>
       ) : (
-        <StudySession key={deck_uid ?? 'all'} initial={data.cards} />
+        <StudySession key={deck_uid ?? 'all'} initial={data.cards} offline={data.offline} fetchedAt={data.fetchedAt} />
       )}
     </AppShell>
   )
@@ -41,7 +65,7 @@ interface QueueItem {
   key: string
 }
 
-function StudySession({ initial }: { initial: CardDTO[] }) {
+function StudySession({ initial, offline, fetchedAt }: { initial: CardDTO[]; offline: boolean; fetchedAt: number }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { data: settings } = useQuery(settingsQuery)
@@ -49,7 +73,9 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
   const deckNames = useMemo(() => new Map(decks.map((d) => [d.uid, d.name])), [decks])
   const intervals = settings?.srs_intervals ?? [0, 1, 2, 3, 7, 30, 60, 90, 180, 360]
   const flipStyle = (settings?.flip_style ?? 'flip') as FlipStyle
-  const review = useReview()
+  const timezone = settings?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  const dayStartHour = settings?.day_starts_at_hour ?? 4
+  const sync = useSyncState()
 
   const [queue, setQueue] = useState<QueueItem[]>(() => initial.map((c) => ({ card: c, key: c.uid })))
   const [idx, setIdx] = useState(0)
@@ -57,14 +83,12 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
   const [drag, setDrag] = useState({ x: 0, dragging: false })
   const [exiting, setExiting] = useState<'right' | 'left' | null>(null)
   const [stats, setStats] = useState({ ok: 0, no: 0 })
-  const [pending, setPending] = useState(0)
-  const [failed, setFailed] = useState(0)
   const sessionStart = useRef(Date.now())
   const cardStart = useRef(Date.now())
   const startX = useRef(0)
 
   const item = queue[idx]
-  const done = idx >= queue.length && pending === 0
+  const done = idx >= queue.length
   const answered = stats.ok + stats.no
 
   useEffect(() => {
@@ -85,20 +109,19 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
       const card = item.card
       setStats((s) => (correct ? { ...s, ok: s.ok + 1 } : { ...s, no: s.no + 1 }))
       setExiting(correct ? 'right' : 'left')
-      setPending((p) => p + 1)
-      review.mutate(
-        { uid: uuidv7(), card_uid: card.uid, correct, duration_ms: Date.now() - cardStart.current },
-        {
-          onSuccess: (res) => {
-            // Interval 0 → the card comes back later in this same session.
-            if (res.due_at <= Date.now() + 1000) {
-              setQueue((q) => [...q, { card: { ...card, level: res.level_after, due_at: res.due_at }, key: `${card.uid}:${q.length}` }])
-            }
-          },
-          onError: () => setFailed((f) => f + 1),
-          onSettled: () => setPending((p) => p - 1),
-        },
-      )
+      // Scheduled on the device so the session works offline; the outbox sends it (now or later)
+      // and the server's answer replaces this estimate.
+      const now = Date.now()
+      const level = nextLevel(card.level, correct, intervals)
+      const due = localDueAt(now, level, intervals, timezone, dayStartHour)
+      void enqueueAnswer({
+        uid: uuidv7(), card_uid: card.uid, correct, client_ts: now, duration_ms: now - cardStart.current,
+        level_after: level, due_at: due,
+      })
+      // Interval 0 → the card comes back later in this same session.
+      if ((intervals[level] ?? 0) === 0) {
+        setQueue((q) => [...q, { card: { ...card, level, due_at: due }, key: `${card.uid}:${q.length}` }])
+      }
       window.setTimeout(() => {
         setIdx((i) => i + 1)
         setRevealed(false)
@@ -106,7 +129,7 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
         setExiting(null)
       }, 280)
     },
-    [item, exiting, review],
+    [item, exiting, intervals, timezone, dayStartHour],
   )
 
   // Keyboard: space/enter reveals, → correct, ← wrong.
@@ -138,7 +161,7 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
   }
 
   if (done) {
-    return <StudyDone stats={stats} failed={failed} elapsed={Date.now() - sessionStart.current} onExit={finish} />
+    return <StudyDone stats={stats} elapsed={Date.now() - sessionStart.current} onExit={finish} />
   }
   if (!item) {
     return <div className="flex min-h-dvh items-center justify-center"><Spinner size={24} /></div>
@@ -174,7 +197,14 @@ function StudySession({ initial }: { initial: CardDTO[] }) {
         <TopBarIcon name="close" label="Oturumu bitir" onClick={() => (answered > 0 ? setIdx(queue.length) : finish())} />
         <div className="flex-1">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="na-mono text-xs font-semibold text-na-text-2">{Math.min(idx + 1, total)} / {total}</span>
+            <span className="inline-flex items-center gap-2">
+              <span className="na-mono text-xs font-semibold text-na-text-2">{Math.min(idx + 1, total)} / {total}</span>
+              {offline || !sync.online ? (
+                <span title={`Kartlar ${ago(fetchedAt)} indirildi`} className="inline-flex items-center gap-1 text-[10px] font-semibold text-na-warn">
+                  <Icon name="wifiOff" size={11} /> çevrimdışı
+                </span>
+              ) : null}
+            </span>
             <div className="flex items-center gap-2 text-[11px] font-semibold">
               <span className="inline-flex items-center gap-1 text-na-accent"><Icon name="check" size={12} strokeWidth={2.5} /><span className="na-mono">{stats.ok}</span></span>
               <span className="inline-flex items-center gap-1 text-na-danger"><Icon name="close" size={12} strokeWidth={2.5} /><span className="na-mono">{stats.no}</span></span>
@@ -272,8 +302,9 @@ function SrsTicker({ level, intervals }: { level: number; intervals: number[] })
   )
 }
 
-function StudyDone({ stats, failed, elapsed, onExit }: { stats: { ok: number; no: number }; failed: number; elapsed: number; onExit: () => void }) {
+function StudyDone({ stats, elapsed, onExit }: { stats: { ok: number; no: number }; elapsed: number; onExit: () => void }) {
   const total = stats.ok + stats.no
+  const sync = useSyncState()
   const ratio = total ? stats.ok / total : 0
   const { data: sum } = useQuery({ ...summaryQuery, staleTime: 0 })
   const goalPct = sum ? Math.min(100, Math.round((sum.reviewed_today / Math.max(1, sum.daily_goal)) * 100)) : null
@@ -311,8 +342,11 @@ function StudyDone({ stats, failed, elapsed, onExit }: { stats: { ok: number; no
           </div>
         </GlassCard>
       ) : null}
-      {failed > 0 ? (
-        <div className="mt-3 text-center text-xs text-na-danger">{failed} cevap kaydedilemedi. Bağlantınızı kontrol edin.</div>
+      {sync.pending > 0 ? (
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-na-text-3">
+          <Icon name={sync.online ? 'refresh' : 'wifiOff'} size={13} />
+          {sync.online ? `${sync.pending} cevap gönderiliyor…` : `${sync.pending} cevap bu cihazda saklandı, bağlantı gelince gönderilecek.`}
+        </div>
       ) : null}
       <Button variant="primary" size="lg" className="mt-[18px] w-full" onClick={onExit}>Bitir</Button>
     </div>

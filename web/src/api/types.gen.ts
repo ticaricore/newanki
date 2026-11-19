@@ -222,6 +222,25 @@ export interface ReviewResult {
   duplicate: boolean;
 }
 /**
+ * ReviewBatchRequest is the body of POST /reviews/batch (answers queued offline).
+ */
+export interface ReviewBatchRequest {
+  reviews: ReviewInput[];
+}
+/**
+ * ReviewBatchItem is the outcome of one queued answer, in request order.
+ */
+export interface ReviewBatchItem extends ReviewResult {
+  status: string; // applied | duplicate | stale | rejected
+  error_code?: string;
+}
+/**
+ * ReviewBatchResponse is returned by POST /reviews/batch.
+ */
+export interface ReviewBatchResponse {
+  results: ReviewBatchItem[];
+}
+/**
  * StatsSummary is returned by GET /stats/summary.
  */
 export interface StatsSummary {

@@ -58,9 +58,9 @@ func New(ctx context.Context, d Deps) (*Server, error) {
 type authLevel int
 
 const (
-	levelUser          authLevel = iota // active user who has no pending password change
-	levelPendingPwOK                    // also allowed while a password change is pending
-	levelAdmin                          // admin, no pending password change
+	levelUser        authLevel = iota // active user who has no pending password change
+	levelPendingPwOK                  // also allowed while a password change is pending
+	levelAdmin                        // admin, no pending password change
 )
 
 // Handler returns the /api/v1 handler.
@@ -90,6 +90,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.Handle("GET "+p+"/study/queue", s.authed(levelUser, true, s.handleStudyQueue))
 	mux.Handle("POST "+p+"/reviews", s.authed(levelUser, true, s.handleReview))
+	mux.Handle("POST "+p+"/reviews/batch", s.authed(levelUser, true, s.handleReviewBatch))
 
 	mux.Handle("GET "+p+"/stats/summary", s.authed(levelUser, true, s.handleStatsSummary))
 	mux.Handle("GET "+p+"/stats/heatmap", s.authed(levelUser, true, s.handleStatsHeatmap))

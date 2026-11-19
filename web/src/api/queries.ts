@@ -1,11 +1,11 @@
 // TanStack Query options and mutations for every API endpoint.
 import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, uuidv7 } from './client'
+import { clearOfflineData, setOfflineUser } from '@/offline/sync'
 import type {
   AdminStats, AdminUserCreate, AdminUserDTO, AdminUserListResponse, AdminUserPatch, AppSettings, CardDTO, CardInput,
   CardListResponse, CardPatch, ChangePasswordRequest, DaysResponse, DeckDTO, DeckInput, DeckListResponse, DeckPatch,
-  DistributionResponse, LoginRequest, MediaDTO, MeResponse, ReviewResult, SettingsPatch, SettingsResponse,
-  StatsSummary, StudyQueueResponse,
+  DistributionResponse, LoginRequest, MediaDTO, MeResponse, SettingsPatch, SettingsResponse, StatsSummary,
 } from './types.gen'
 
 export const qk = {
@@ -15,7 +15,6 @@ export const qk = {
   deck: (uid: string) => ['decks', uid] as const,
   cards: (p: CardsParams) => ['cards', p] as const,
   card: (uid: string) => ['card', uid] as const,
-  queue: (deckUid?: string) => ['queue', deckUid ?? 'all'] as const,
   stats: ['stats'] as const,
   admin: ['admin'] as const,
 }
@@ -66,14 +65,6 @@ export const cardsQuery = (p: CardsParams) =>
 
 export const cardQuery = (uid: string) =>
   queryOptions({ queryKey: qk.card(uid), queryFn: () => api<CardDTO>('GET', `/cards/${uid}`) })
-
-export const queueQuery = (deckUid?: string) =>
-  queryOptions({
-    queryKey: qk.queue(deckUid),
-    queryFn: () => api<StudyQueueResponse>('GET', `/study/queue${qs({ deck_uid: deckUid })}`),
-    staleTime: 0,
-    gcTime: 0,
-  })
 
 export const summaryQuery = queryOptions({
   queryKey: [...qk.stats, 'summary'],
@@ -128,7 +119,12 @@ export function useLogout() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: () => api<void>('POST', '/auth/logout'),
-    onSettled: () => qc.clear(),
+    onSettled: async () => {
+      const uid = qc.getQueryData<MeResponse>(qk.me)?.user.uid
+      setOfflineUser(null)
+      if (uid) await clearOfflineData(uid)
+      qc.clear()
+    },
   })
 }
 
@@ -207,21 +203,6 @@ export function usePatchCard() {
 export function useDeleteCard() {
   const inv = useInvalidateContent()
   return useMutation({ mutationFn: (uid: string) => api<void>('DELETE', `/cards/${uid}`), onSuccess: inv })
-}
-
-export interface ReviewVars {
-  uid: string
-  card_uid: string
-  correct: boolean
-  duration_ms: number
-}
-
-/** Submits one answer. The uid is generated before the call so a retry cannot double-count. */
-export function useReview() {
-  return useMutation({
-    mutationFn: (v: ReviewVars) => api<ReviewResult>('POST', '/reviews', { ...v, client_ts: Date.now() }),
-    retry: 3,
-  })
 }
 
 export function useUploadMedia() {

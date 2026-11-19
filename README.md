@@ -11,6 +11,14 @@ Mobil öncelikli aralıklı tekrar (SRS) PWA'sı. Go + SQLite arka uç, React + 
   - İç anahtarlar `INTEGER PRIMARY KEY`, dışarıya yalnızca `uid` (UUIDv7) açılır.
 - `web/` — Vite + React 19 + TS, Tailwind v4, TanStack Router/Query/Form, Vaul, vite-plugin-pwa.
 
+## Çevrimdışı çalışma
+
+- Uygulama kabuğu service worker ile önbellekte; bağlantı yokken de açılır.
+- Giriş yapılınca önümüzdeki 3 günün kartları (ve görsel/ses dosyaları) IndexedDB'ye indirilir. Bugün, Desteler ve İlerleme ekranları son görülen veriyle açılır.
+- Her cevap önce cihazdaki kuyruğa (outbox) yazılır, sonra `POST /api/v1/reviews/batch` ile gönderilir. Bağlantı yoksa bekler; bağlantı gelince, uygulama açılınca veya en geç bir dakika içinde gönderilir.
+- Sunucu cevapları gerçek cevap zamanına (`client_ts`, en fazla 30 gün geriye) göre sıralayıp uygular. Aynı cevap iki kez sayılmaz. Başka cihazda daha yeni bir tekrar varsa eski cevap kayda geçer ama kartı geri almaz.
+- Kart/deste oluşturma ve arama bağlantı gerektirir.
+
 ## Geliştirme
 
 ```bash

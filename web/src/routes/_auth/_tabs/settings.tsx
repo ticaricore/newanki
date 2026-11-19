@@ -9,6 +9,8 @@ import { Avatar, TopBar } from '@/components/layout/TopBar'
 import { Button, GlassCard, GlassSegment, Pill } from '@/components/ui/glass'
 import { tint } from '@/components/ui/categories'
 import { Sheet } from '@/components/ui/Sheet'
+import { ago } from '@/lib/format'
+import { flush, offlineInfo, prepareOffline, useSyncState } from '@/offline/sync'
 import { useTheme } from '@/theme/ThemeProvider'
 import { ACCENT_OPTIONS, type Density, type FlipStyle, type FontName, type ThemeName, type VisualDirection } from '@/theme/theme'
 
@@ -103,6 +105,8 @@ function SettingsScreen() {
         </GlassCard>
       </Section>
 
+      <OfflineSection userUid={user.uid} />
+
       <SettingSection title="Veri">
         <SettingRow icon="download" color="#34D399" label="Verilerimi indir" detail="SQLite" href="/api/v1/export/sqlite" />
       </SettingSection>
@@ -162,6 +166,41 @@ function SettingSection({ title, children }: { title: string; children: ReactNod
         ))}
       </GlassCard>
     </Section>
+  )
+}
+
+/** Sync status, manual sync and the copy of upcoming cards kept for offline study. */
+function OfflineSection({ userUid }: { userUid: string }) {
+  const sync = useSyncState()
+  const [busy, setBusy] = useState(false)
+  const info = useQuery({ queryKey: ['offline-info', userUid, sync.lastSyncAt], queryFn: () => offlineInfo(userUid), networkMode: 'always' })
+  const status = !sync.online ? 'Çevrimdışı' : sync.syncing ? 'Gönderiliyor…' : sync.pending > 0 ? `${sync.pending} cevap bekliyor` : 'Güncel'
+  const download = async () => {
+    setBusy(true)
+    try {
+      await prepareOffline(userUid, true)
+      await info.refetch()
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <SettingSection title="Çevrimdışı">
+      <SettingRow
+        icon={sync.online ? 'cloudCheck' : 'wifiOff'}
+        color={sync.online ? '#34D399' : '#FCD34D'}
+        label="Senkron"
+        detail={sync.lastSyncAt ? `${status} · ${ago(sync.lastSyncAt)}` : status}
+        onClick={sync.pending > 0 && sync.online ? () => void flush() : undefined}
+      />
+      <SettingRow
+        icon="download"
+        color="#60A5FA"
+        label="Cihazdaki kartlar"
+        detail={busy ? 'İndiriliyor…' : info.data ? `${info.data.cards} kart · ${ago(info.data.fetchedAt)}` : 'İndirilmedi'}
+        onClick={sync.online && !busy ? () => void download() : undefined}
+      />
+    </SettingSection>
   )
 }
 

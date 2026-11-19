@@ -67,11 +67,11 @@ WHERE c.uid = ? AND c.deleted_at IS NULL AND d.deleted_at IS NULL`, uid)
 
 // ListCardsParams filters ListCards. Zero values mean "no filter".
 type ListCardsParams struct {
-	DeckID    int64
-	Type      string
-	Query     string // full-text search; disables cursor paging
-	AfterUID  string // cursor: return cards created before this card
-	Limit     int
+	DeckID   int64
+	Type     string
+	Query    string // full-text search; disables cursor paging
+	AfterUID string // cursor: return cards created before this card
+	Limit    int
 }
 
 // ListCards lists live cards, newest first, or by relevance when Query is set.

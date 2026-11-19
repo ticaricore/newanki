@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { ApiError } from '@/api/client'
 import { meQuery, settingsQuery } from '@/api/queries'
+import { prepareOffline, setOfflineUser } from '@/offline/sync'
 import { useTheme } from '@/theme/ThemeProvider'
 import type { Density, FontName, ThemeName, VisualDirection } from '@/theme/theme'
 
@@ -24,7 +25,13 @@ export const Route = createFileRoute('/_auth')({
 })
 
 function AuthLayout() {
+  const { me } = Route.useRouteContext()
   const { data: settings } = useQuery(settingsQuery)
+  // Sync this user's queued answers and keep a copy of upcoming cards for offline study.
+  useEffect(() => {
+    setOfflineUser(me.uid)
+    void prepareOffline(me.uid)
+  }, [me.uid])
   const { setPrefs } = useTheme()
   useEffect(() => {
     if (!settings) return

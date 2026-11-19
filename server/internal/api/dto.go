@@ -194,6 +194,23 @@ type ReviewResult struct {
 	Duplicate   bool   `json:"duplicate"`
 }
 
+// ReviewBatchRequest is the body of POST /reviews/batch (answers queued offline).
+type ReviewBatchRequest struct {
+	Reviews []ReviewInput `json:"reviews"`
+}
+
+// ReviewBatchItem is the outcome of one queued answer, in request order.
+type ReviewBatchItem struct {
+	ReviewResult `tstype:",extends"`
+	Status       string `json:"status"` // applied | duplicate | stale | rejected
+	ErrorCode    string `json:"error_code,omitempty" tstype:",optional"`
+}
+
+// ReviewBatchResponse is returned by POST /reviews/batch.
+type ReviewBatchResponse struct {
+	Results []ReviewBatchItem `json:"results"`
+}
+
 // StatsSummary is returned by GET /stats/summary.
 type StatsSummary struct {
 	Streak        int     `json:"streak"`
