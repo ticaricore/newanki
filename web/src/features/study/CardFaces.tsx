@@ -127,6 +127,12 @@ function CardBack({ card, deckName }: { card: CardDTO; deckName?: string }) {
             {f.example ? (
               <div className="na-glass mx-auto mt-[22px] max-w-[280px] px-3.5 py-3 text-left text-[13px] leading-normal text-na-text-2" style={{ borderRadius: 14 }}>
                 <span className="text-na-text-3">ör.</span> {f.example}
+                {f.example_tr ? <div className="mt-1.5 text-xs text-na-text-3">{f.example_tr}</div> : null}
+              </div>
+            ) : null}
+            {f.synonyms ? (
+              <div className="mx-auto mt-3 max-w-[280px] text-xs text-na-text-3">
+                <span className="font-semibold">eş anl.</span> {f.synonyms}
               </div>
             ) : null}
           </div>

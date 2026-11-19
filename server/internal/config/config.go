@@ -16,6 +16,10 @@ type Config struct {
 	TrustProxy    bool   // trust X-Forwarded-For for client IPs (rate limiting)
 	AdminEmail    string // bootstrap admin email (first start only)
 	AdminPassword string // bootstrap admin password (first start only)
+	// AnthropicAPIKey enables AI card generation. Read from ANTHROPIC_API_KEY only (no flag, so the
+	// key never shows up in the process list).
+	AnthropicAPIKey string
+	AIModel         string // NEWANKI_AI_MODEL, default ai.DefaultModel
 }
 
 // Load parses flags from args, with environment variables as defaults.
@@ -32,6 +36,8 @@ func Load(args []string) (Config, error) {
 	if err := fs.Parse(args); err != nil {
 		return c, err
 	}
+	c.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	c.AIModel = os.Getenv("NEWANKI_AI_MODEL")
 	if *secure == "" {
 		c.CookieSecure = !c.Dev
 	} else {

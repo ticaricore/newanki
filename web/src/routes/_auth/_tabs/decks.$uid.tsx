@@ -73,6 +73,7 @@ function DeckDetail() {
           </div>
           <div className="relative mt-4 flex gap-2">
             <Button className="flex-1" icon="plus" onClick={() => navigate({ to: '/cards/new', search: { deck_uid: deck.uid } })}>Kart ekle</Button>
+            <Button iconOnly icon="sparkle" aria-label="AI ile üret" onClick={() => navigate({ to: '/ai', search: { deck_uid: deck.uid } })} />
             <Button variant="primary" className="flex-1" disabled={deck.due_count === 0} onClick={() => navigate({ to: '/study', search: { deck_uid: deck.uid } })}>
               {deck.due_count > 0 ? `${deck.due_count} kart çalış` : 'Bugünlük bitti'}
             </Button>
@@ -88,7 +89,16 @@ function DeckDetail() {
         {cards.isPending ? (
           <div className="flex justify-center py-8"><Spinner /></div>
         ) : list.length === 0 ? (
-          <EmptyState icon="plus" title="Bu deste boş" action={<Button variant="primary" icon="plus" onClick={() => navigate({ to: '/cards/new', search: { deck_uid: deck.uid } })}>İlk kartı ekle</Button>}>
+          <EmptyState
+            icon="plus"
+            title="Bu deste boş"
+            action={
+              <div className="flex flex-col gap-2">
+                <Button variant="primary" icon="plus" onClick={() => navigate({ to: '/cards/new', search: { deck_uid: deck.uid } })}>İlk kartı ekle</Button>
+                <Button icon="sparkle" onClick={() => navigate({ to: '/ai', search: { deck_uid: deck.uid } })}>AI ile kart üret</Button>
+              </div>
+            }
+          >
             Kelime, ses, görsel veya Kurʼan kartı ekleyerek başla.
           </EmptyState>
         ) : (

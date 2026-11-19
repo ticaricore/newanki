@@ -19,6 +19,18 @@ Mobil öncelikli aralıklı tekrar (SRS) PWA'sı. Go + SQLite arka uç, React + 
 - Sunucu cevapları gerçek cevap zamanına (`client_ts`, en fazla 30 gün geriye) göre sıralayıp uygular. Aynı cevap iki kez sayılmaz. Başka cihazda daha yeni bir tekrar varsa eski cevap kayda geçer ama kartı geri almaz.
 - Kart/deste oluşturma ve arama bağlantı gerektirir.
 
+## AI ile kart üretme
+
+- Sunucuyu `ANTHROPIC_API_KEY` ortam değişkeniyle başlatınca açılır (anahtar yalnızca sunucuda durur, tarayıcıya gitmez). Model varsayılan olarak `claude-opus-5-5`; `NEWANKI_AI_MODEL` ile değiştirilebilir.
+- **Tek kelime:** anlam, IPA, tür, örnek cümle ve çevirisi, eş anlamlılar önerilir; düzenleyip "Karta dönüştür" ile desteye eklenir.
+- **Konu veya metin:** 5–30 kelime kartı önerilir. Destede zaten olan kelimeler isteğe eklenir ve tekrar önerilmez; destelerde bulunanlar "zaten var" diye işaretlenir.
+- Yönetim panelinden açılıp kapatılabilir ve kullanıcı başına günlük istek sınırı (varsayılan 30) ayarlanır. Panel o günkü istek, kart ve token sayısını gösterir.
+- Güvenlik sınıflandırıcısının reddettiği istekler sunucu tarafı yedek modelle (`fallbacks: "default"`) tekrar denenir.
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... make dev
+```
+
 ## Geliştirme
 
 ```bash

@@ -142,6 +142,8 @@ export interface CardFields {
   ipa?: string;
   pos?: string;
   example?: string;
+  example_tr?: string; // translation of the example
+  synonyms?: string;
   lang?: string;
   /**
    * audio + image
@@ -301,6 +303,8 @@ export interface AppSettings {
   default_daily_goal: number /* int */;
   upload_max_bytes: number /* int64 */;
   app_name: string;
+  ai_enabled: boolean;
+  ai_daily_limit: number /* int */; // generate requests per user per day
 }
 /**
  * AdminUserDTO is a user in the admin panel.
@@ -342,4 +346,46 @@ export interface AdminStats {
   admins: number /* int */;
   total_db_bytes: number /* int64 */;
   open_databases: number /* int */;
+  ai_configured: boolean; // ANTHROPIC_API_KEY is set
+  ai_model: string;
+  ai_requests_today: number /* int64 */;
+  ai_cards_today: number /* int64 */;
+  ai_tokens_today: number /* int64 */;
+}
+/**
+ * AIStatus is returned by GET /ai/status.
+ */
+export interface AIStatus {
+  available: boolean;
+  reason?: string; // not_configured | disabled | limit
+  daily_limit: number /* int */;
+  used_today: number /* int64 */;
+  remaining_today: number /* int64 */;
+}
+/**
+ * AIGenerateRequest is the body of POST /ai/generate.
+ */
+export interface AIGenerateRequest {
+  mode: string; // word | list
+  input: string;
+  source_lang: string;
+  target_lang: string;
+  count?: number /* int */; // list mode, 1–30 (default 10)
+  deck_uid?: string; // list mode: skip words the deck has
+}
+/**
+ * AICard is a generated word card, ready for POST /cards.
+ */
+export interface AICard {
+  front: string;
+  back: string;
+  fields: CardFields;
+  exists: boolean; // a card with this front is already in the user's decks
+}
+/**
+ * AIGenerateResponse is returned by POST /ai/generate.
+ */
+export interface AIGenerateResponse {
+  cards: AICard[];
+  remaining_today: number /* int64 */;
 }

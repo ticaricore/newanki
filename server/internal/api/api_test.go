@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/newanki/server/internal/accounts"
+	"github.com/newanki/server/internal/ai"
 	"github.com/newanki/server/internal/config"
 	"github.com/newanki/server/internal/db"
 	"github.com/newanki/server/internal/db/maindb"
@@ -30,6 +31,12 @@ type env struct {
 }
 
 func newEnv(t *testing.T) *env {
+	t.Helper()
+	return newEnvAI(t, nil)
+}
+
+// newEnvAI is newEnv with an AI generator (nil: AI not configured).
+func newEnvAI(t *testing.T, gen ai.Generator) *env {
 	t.Helper()
 	ctx := context.Background()
 	dir := t.TempDir()
@@ -53,7 +60,7 @@ func newEnv(t *testing.T) *env {
 	if created, _ := acc.EnsureBootstrapAdmin(ctx, "admin@newanki.local", "Other123!"); created {
 		t.Fatal("bootstrap must not run twice")
 	}
-	srv, err := New(ctx, Deps{Config: config.Config{}, MainDB: sqlDB, Users: users, Accounts: acc, Logger: log})
+	srv, err := New(ctx, Deps{Config: config.Config{}, MainDB: sqlDB, Users: users, Accounts: acc, Logger: log, AI: gen})
 	if err != nil {
 		t.Fatal(err)
 	}

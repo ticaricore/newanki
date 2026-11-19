@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"errors"
 	"flag"
@@ -24,6 +25,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/newanki/server/internal/accounts"
+	"github.com/newanki/server/internal/ai"
 	"github.com/newanki/server/internal/api"
 	"github.com/newanki/server/internal/config"
 	"github.com/newanki/server/internal/db"
@@ -126,7 +128,14 @@ func serve(args []string, log *slog.Logger) error {
 		}
 	}
 
-	srv, err := api.New(ctx, api.Deps{Config: cfg, MainDB: a.accounts.DB, Users: a.users, Accounts: a.accounts, Logger: log})
+	deps := api.Deps{Config: cfg, MainDB: a.accounts.DB, Users: a.users, Accounts: a.accounts, Logger: log}
+	if gen := ai.NewClaude(cfg.AnthropicAPIKey, cfg.AIModel); gen != nil {
+		deps.AI = gen
+		log.Info("AI card generation enabled", "model", cmp.Or(cfg.AIModel, ai.DefaultModel))
+	} else {
+		log.Info("AI card generation off (set ANTHROPIC_API_KEY to enable)")
+	}
+	srv, err := api.New(ctx, deps)
 	if err != nil {
 		return err
 	}

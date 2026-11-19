@@ -8,6 +8,15 @@ import (
 	"database/sql"
 )
 
+type AiUsage struct {
+	UserID       int64
+	Day          string
+	Requests     int64
+	Cards        int64
+	InputTokens  int64
+	OutputTokens int64
+}
+
 type AppSetting struct {
 	Key       string
 	Value     string

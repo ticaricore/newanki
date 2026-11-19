@@ -46,7 +46,7 @@ func normalizeCard(ctx context.Context, q *userdb.Queries, typ string, front, ba
 	var out CardFields
 	switch typ {
 	case "word":
-		out = CardFields{IPA: t(f.IPA), POS: t(f.POS), Example: t(f.Example), Lang: t(f.Lang)}
+		out = CardFields{IPA: t(f.IPA), POS: t(f.POS), Example: t(f.Example), ExampleTr: t(f.ExampleTr), Synonyms: t(f.Synonyms), Lang: t(f.Lang)}
 		if front == "" {
 			return "", "", out, errField("front", "ön yüz boş olamaz")
 		}

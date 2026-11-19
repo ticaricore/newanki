@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/newanki/server/internal/accounts"
+	"github.com/newanki/server/internal/ai"
 	"github.com/newanki/server/internal/config"
 	"github.com/newanki/server/internal/db"
 	"github.com/newanki/server/internal/db/maindb"
@@ -24,6 +25,7 @@ type Server struct {
 	accounts *accounts.Service
 	log      *slog.Logger
 	limiter  *loginLimiter
+	ai       ai.Generator // nil when ANTHROPIC_API_KEY is not set
 	app      atomic.Pointer[AppSettings]
 	now      func() time.Time
 }
@@ -35,6 +37,7 @@ type Deps struct {
 	Users    *db.UserDBManager
 	Accounts *accounts.Service
 	Logger   *slog.Logger
+	AI       ai.Generator // optional
 }
 
 // New builds the API server and loads global settings.
@@ -47,6 +50,7 @@ func New(ctx context.Context, d Deps) (*Server, error) {
 		accounts: d.Accounts,
 		log:      d.Logger,
 		limiter:  newLoginLimiter(),
+		ai:       d.AI,
 		now:      time.Now,
 	}
 	if err := s.reloadAppSettings(ctx); err != nil {
@@ -109,6 +113,8 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET "+p+"/admin/settings", s.authed(levelAdmin, false, s.handleAdminGetSettings))
 	mux.Handle("PUT "+p+"/admin/settings", s.authed(levelAdmin, false, s.handleAdminPutSettings))
 	mux.Handle("GET "+p+"/admin/stats", s.authed(levelAdmin, false, s.handleAdminStats))
+	mux.Handle("GET "+p+"/ai/status", s.authed(levelUser, false, s.handleAIStatus))
+	mux.Handle("POST "+p+"/ai/generate", s.authed(levelUser, true, s.handleAIGenerate))
 
 	mux.Handle(p+"/", s.wrap(func(w http.ResponseWriter, r *http.Request) error {
 		return errNotFound("uç nokta")

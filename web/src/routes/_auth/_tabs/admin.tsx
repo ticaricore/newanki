@@ -7,6 +7,7 @@ import {
   useAdminPatchUser, useAdminPutSettings,
 } from '@/api/queries'
 import type { AdminUserDTO } from '@/api/types.gen'
+import { Icon } from '@/components/icons'
 import { Section } from '@/components/layout/AppShell'
 import { Avatar, TopBar, TopBarIcon } from '@/components/layout/TopBar'
 import { Button, GlassCard, GlassSegment, Pill, Spinner, StatTile } from '@/components/ui/glass'
@@ -169,8 +170,13 @@ function GlobalSettings() {
   const [goal, setGoal] = useState('')
   const [mb, setMb] = useState('')
   const [name, setName] = useState('')
+  const [aiOn, setAiOn] = useState<'on' | 'off'>('on')
+  const [aiLimit, setAiLimit] = useState('')
+  const { data: stats } = useQuery(adminStatsQuery)
   useEffect(() => {
     if (!data) return
+    setAiOn(data.ai_enabled ? 'on' : 'off')
+    setAiLimit(String(data.ai_daily_limit))
     setIntervals(data.srs_intervals.join(', '))
     setGoal(String(data.default_daily_goal))
     setMb(String(Math.round((data.upload_max_bytes / 1024 / 1024) * 10) / 10))
@@ -192,6 +198,8 @@ function GlobalSettings() {
               default_daily_goal: Number(goal),
               upload_max_bytes: Math.round(Number(mb) * 1024 * 1024),
               app_name: name,
+              ai_enabled: aiOn === 'on',
+              ai_daily_limit: Number(aiLimit),
             })
           }}
         >
@@ -201,6 +209,22 @@ function GlobalSettings() {
             <TextInput label="Yükleme sınırı (MB)" name="mb" inputMode="decimal" value={mb} onChange={(e) => setMb(e.target.value)} error={err?.fields.upload_max_bytes} />
           </div>
           <TextInput label="Uygulama adı" name="app_name" value={name} onChange={(e) => setName(e.target.value)} error={err?.fields.app_name} />
+          <div className="na-glass flex flex-col gap-3 p-3.5" style={{ borderRadius: 14 }}>
+            <div className="flex items-center gap-2">
+              <Icon name="sparkle" size={15} color="#A78BFA" />
+              <span className="flex-1 text-[13px] font-semibold">AI ile kart üretme</span>
+              <Pill tone={stats?.ai_configured ? 'accent' : undefined}>{stats?.ai_configured ? stats.ai_model : 'Anahtar yok'}</Pill>
+            </div>
+            {stats?.ai_configured ? (
+              <div className="text-[11px] text-na-text-3">Bugün {stats.ai_requests_today} istek · {stats.ai_cards_today} kart · {stats.ai_tokens_today.toLocaleString('tr-TR')} token</div>
+            ) : (
+              <div className="text-[11px] leading-normal text-na-text-3">Açmak için sunucuyu <span className="na-mono">ANTHROPIC_API_KEY</span> ortam değişkeniyle başlatın.</div>
+            )}
+            <div className="grid grid-cols-2 items-end gap-2.5">
+              <GlassSegment<'on' | 'off'> full ariaLabel="AI ile üretme" value={aiOn} onChange={setAiOn} options={[{ value: 'on', label: 'Açık' }, { value: 'off', label: 'Kapalı' }]} />
+              <TextInput label="Günlük istek / kullanıcı" name="ai_limit" inputMode="numeric" value={aiLimit} onChange={(e) => setAiLimit(e.target.value)} error={err?.fields.ai_daily_limit} />
+            </div>
+          </div>
           <div className="text-[11px] leading-normal text-na-text-3">Aralık değişikliği yeni cevaplardan itibaren tüm kullanıcılara uygulanır. Kısaltılan merdivende üst seviyedeki kartlar en üst seviyeye çekilir.</div>
           {put.isSuccess ? <div className="text-xs text-na-accent">Kaydedildi ✓</div> : null}
           <Button type="submit" variant="primary" className="w-full" disabled={put.isPending}>{put.isPending ? 'Kaydediliyor…' : 'Ayarları kaydet'}</Button>

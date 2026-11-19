@@ -181,6 +181,13 @@ func (s *Server) handleAdminStats(w http.ResponseWriter, r *http.Request, rc *re
 			st.TotalDBBytes += s.users.Size(uid)
 		}
 	}
+	st.AIConfigured = s.ai != nil
+	st.AIModel = s.aiModel()
+	usage, err := s.mainQ.AIUsageForDay(r.Context(), aiDay(s.now()))
+	if err != nil {
+		return err
+	}
+	st.AIRequests, st.AICards, st.AITokens = usage.Requests, usage.Cards, usage.InputTokens+usage.OutputTokens
 	writeJSON(w, http.StatusOK, st)
 	return nil
 }

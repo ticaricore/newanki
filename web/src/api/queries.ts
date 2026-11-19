@@ -3,7 +3,7 @@ import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from 
 import { api, uuidv7 } from './client'
 import { clearOfflineData, setOfflineUser } from '@/offline/sync'
 import type {
-  AdminStats, AdminUserCreate, AdminUserDTO, AdminUserListResponse, AdminUserPatch, AppSettings, CardDTO, CardInput,
+  AIGenerateRequest, AIGenerateResponse, AIStatus, AdminStats, AdminUserCreate, AdminUserDTO, AdminUserListResponse, AdminUserPatch, AppSettings, CardDTO, CardInput,
   CardListResponse, CardPatch, ChangePasswordRequest, DaysResponse, DeckDTO, DeckInput, DeckListResponse, DeckPatch,
   DistributionResponse, LoginRequest, MediaDTO, MeResponse, SettingsPatch, SettingsResponse, StatsSummary,
 } from './types.gen'
@@ -86,6 +86,12 @@ export const heatmapQuery = (range: '6m' | '1y') =>
 export const distributionQuery = queryOptions({
   queryKey: [...qk.stats, 'distribution'],
   queryFn: () => api<DistributionResponse>('GET', '/stats/distribution').then((r) => r.levels),
+})
+
+export const aiStatusQuery = queryOptions({
+  queryKey: ['ai', 'status'],
+  queryFn: () => api<AIStatus>('GET', '/ai/status'),
+  staleTime: 0,
 })
 
 export const adminUsersQuery = queryOptions({
@@ -247,5 +253,14 @@ export function useAdminPutSettings() {
       qc.setQueryData(adminSettingsQuery.queryKey, s)
       qc.invalidateQueries({ queryKey: qk.settings })
     },
+  })
+}
+
+/** Generates card suggestions with AI; nothing is saved until the cards are created. */
+export function useAIGenerate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: AIGenerateRequest) => api<AIGenerateResponse>('POST', '/ai/generate', body),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['ai', 'status'] }),
   })
 }

@@ -125,10 +125,12 @@ type CardDTO struct {
 // CardFields holds the type-specific card fields. Only the keys relevant to the card type are kept.
 type CardFields struct {
 	// word
-	IPA     string `json:"ipa,omitempty" tstype:",optional"`
-	POS     string `json:"pos,omitempty" tstype:",optional"`
-	Example string `json:"example,omitempty" tstype:",optional"`
-	Lang    string `json:"lang,omitempty" tstype:",optional"`
+	IPA       string `json:"ipa,omitempty" tstype:",optional"`
+	POS       string `json:"pos,omitempty" tstype:",optional"`
+	Example   string `json:"example,omitempty" tstype:",optional"`
+	ExampleTr string `json:"example_tr,omitempty" tstype:",optional"` // translation of the example
+	Synonyms  string `json:"synonyms,omitempty" tstype:",optional"`
+	Lang      string `json:"lang,omitempty" tstype:",optional"`
 	// audio + image
 	MediaUID string `json:"media_uid,omitempty" tstype:",optional"`
 	// audio
@@ -264,6 +266,8 @@ type AppSettings struct {
 	DefaultDailyGoal int    `json:"default_daily_goal"`
 	UploadMaxBytes   int64  `json:"upload_max_bytes"`
 	AppName          string `json:"app_name"`
+	AIEnabled        bool   `json:"ai_enabled"`
+	AIDailyLimit     int    `json:"ai_daily_limit"` // generate requests per user per day
 }
 
 // AdminUserDTO is a user in the admin panel.
@@ -296,9 +300,47 @@ type AdminUserPatch struct {
 
 // AdminStats is returned by GET /admin/stats.
 type AdminStats struct {
-	Users         int   `json:"users"`
-	ActiveUsers   int   `json:"active_users"`
-	Admins        int   `json:"admins"`
-	TotalDBBytes  int64 `json:"total_db_bytes"`
-	OpenDatabases int   `json:"open_databases"`
+	Users         int    `json:"users"`
+	ActiveUsers   int    `json:"active_users"`
+	Admins        int    `json:"admins"`
+	TotalDBBytes  int64  `json:"total_db_bytes"`
+	OpenDatabases int    `json:"open_databases"`
+	AIConfigured  bool   `json:"ai_configured"` // ANTHROPIC_API_KEY is set
+	AIModel       string `json:"ai_model"`
+	AIRequests    int64  `json:"ai_requests_today"`
+	AICards       int64  `json:"ai_cards_today"`
+	AITokens      int64  `json:"ai_tokens_today"`
+}
+
+// AIStatus is returned by GET /ai/status.
+type AIStatus struct {
+	Available bool   `json:"available"`
+	Reason    string `json:"reason,omitempty" tstype:",optional"` // not_configured | disabled | limit
+	Limit     int    `json:"daily_limit"`
+	Used      int64  `json:"used_today"`
+	Remaining int64  `json:"remaining_today"`
+}
+
+// AIGenerateRequest is the body of POST /ai/generate.
+type AIGenerateRequest struct {
+	Mode       string  `json:"mode"` // word | list
+	Input      string  `json:"input"`
+	SourceLang string  `json:"source_lang"`
+	TargetLang string  `json:"target_lang"`
+	Count      int     `json:"count,omitempty" tstype:",optional"`    // list mode, 1–30 (default 10)
+	DeckUID    *string `json:"deck_uid,omitempty" tstype:",optional"` // list mode: skip words the deck has
+}
+
+// AICard is a generated word card, ready for POST /cards.
+type AICard struct {
+	Front  string     `json:"front"`
+	Back   string     `json:"back"`
+	Fields CardFields `json:"fields"`
+	Exists bool       `json:"exists"` // a card with this front is already in the user's decks
+}
+
+// AIGenerateResponse is returned by POST /ai/generate.
+type AIGenerateResponse struct {
+	Cards     []AICard `json:"cards"`
+	Remaining int64    `json:"remaining_today"`
 }

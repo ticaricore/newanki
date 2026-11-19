@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { ApiError } from '@/api/client'
 import { decksQuery, useCreateCard, useDeleteCard, usePatchCard } from '@/api/queries'
 import type { CardDTO, CardFields } from '@/api/types.gen'
 import { Icon } from '@/components/icons'
 import { TopBar, TopBarIcon } from '@/components/layout/TopBar'
-import { Button, CategoryDot, Field, Label, Pill } from '@/components/ui/glass'
+import { Button, CategoryDot, Field, Label } from '@/components/ui/glass'
 import { FormError, TextArea, TextInput, firstError } from '@/components/ui/form'
 import { CARD_TYPES, tint, type CardType } from '@/components/ui/categories'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
@@ -151,18 +152,27 @@ export function CardEditor({ card, defaultDeckUid, onClose, onSaved }: { card?: 
           }}
         </form.Field>
 
-        {/* AI teaser (phase 3) */}
+        {/* AI generation */}
         {!card ? (
-          <div className="px-[18px] pt-3.5">
-            <div className="na-glass na-glass--strong flex w-full items-center gap-2.5 px-3.5 py-3 opacity-70" style={{ borderRadius: 14, background: 'linear-gradient(90deg, rgba(167,139,250,0.16), rgba(96,165,250,0.12))', borderColor: 'rgba(167,139,250,0.30)' }}>
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'rgba(167,139,250,0.25)', color: '#A78BFA' }}><Icon name="sparkle" size={14} strokeWidth={2} /></div>
-              <div className="flex-1">
-                <div className="text-[13px] font-semibold">AI ile otomatik üret</div>
-                <div className="mt-px text-[11px] text-na-text-3">Bir kelime yaz · arka yüzü öner</div>
+          <form.Subscribe selector={(s) => s.values.deck_uid}>
+            {(deckUid) => (
+              <div className="px-[18px] pt-3.5">
+                <Link
+                  to="/ai"
+                  search={{ deck_uid: deckUid || undefined }}
+                  className="na-glass na-glass--strong flex w-full items-center gap-2.5 px-3.5 py-3 text-na-text no-underline"
+                  style={{ borderRadius: 14, background: 'linear-gradient(90deg, rgba(167,139,250,0.16), rgba(96,165,250,0.12))', borderColor: 'rgba(167,139,250,0.30)' }}
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'rgba(167,139,250,0.25)', color: '#A78BFA' }}><Icon name="sparkle" size={14} strokeWidth={2} /></div>
+                  <div className="flex-1">
+                    <div className="text-[13px] font-semibold">AI ile otomatik üret</div>
+                    <div className="mt-px text-[11px] text-na-text-3">Bir kelime veya konu yaz · kartları öner</div>
+                  </div>
+                  <Icon name="chevronR" size={16} color="var(--na-text-3)" />
+                </Link>
               </div>
-              <Pill tone="purple">YAKINDA</Pill>
-            </div>
-          </div>
+            )}
+          </form.Subscribe>
         ) : null}
 
         {/* Type-specific fields */}
@@ -190,6 +200,12 @@ export function CardEditor({ card, defaultDeckUid, onClose, onSaved }: { card?: 
                   </form.Field>
                   <form.Field name="fields.example">
                     {(f) => <TextArea label="Örnek cümle" name="example" placeholder="A serendipitous encounter at the library…" value={f.state.value ?? ''} onChange={(e) => f.handleChange(e.target.value)} />}
+                  </form.Field>
+                  <form.Field name="fields.example_tr">
+                    {(f) => <TextArea label="Örnek cümlenin çevirisi" name="example_tr" rows={2} placeholder="Kütüphanede tesadüfi bir karşılaşma…" value={f.state.value ?? ''} onChange={(e) => f.handleChange(e.target.value)} />}
+                  </form.Field>
+                  <form.Field name="fields.synonyms">
+                    {(f) => <TextInput label="Eş anlamlılar" name="synonyms" placeholder="chance, fluke, fortuity" value={f.state.value ?? ''} onChange={(e) => f.handleChange(e.target.value)} />}
                   </form.Field>
                 </>
               )}

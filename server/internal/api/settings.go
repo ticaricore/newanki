@@ -21,6 +21,8 @@ func defaultAppSettings() AppSettings {
 		DefaultDailyGoal: 40,
 		UploadMaxBytes:   5 << 20,
 		AppName:          "NewAnki",
+		AIEnabled:        true,
+		AIDailyLimit:     30,
 	}
 }
 
@@ -29,6 +31,8 @@ var appSettingKeys = map[string]func(*AppSettings) any{
 	"defaults.daily_goal": func(a *AppSettings) any { return &a.DefaultDailyGoal },
 	"uploads.max_bytes":   func(a *AppSettings) any { return &a.UploadMaxBytes },
 	"app.name":            func(a *AppSettings) any { return &a.AppName },
+	"ai.enabled":          func(a *AppSettings) any { return &a.AIEnabled },
+	"ai.daily_limit":      func(a *AppSettings) any { return &a.AIDailyLimit },
 }
 
 func (s *Server) reloadAppSettings(ctx context.Context) error {
@@ -67,6 +71,9 @@ func validateAppSettings(a AppSettings) error {
 	}
 	if n := len(strings.TrimSpace(a.AppName)); n == 0 || n > 60 {
 		return errField("app_name", "1–60 karakter olmalı")
+	}
+	if a.AIDailyLimit < 0 || a.AIDailyLimit > 1000 {
+		return errField("ai_daily_limit", "0 ile 1000 arasında olmalı")
 	}
 	return nil
 }

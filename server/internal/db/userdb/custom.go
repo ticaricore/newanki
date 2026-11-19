@@ -255,3 +255,31 @@ func (q *Queries) MediaExists(ctx context.Context, uid, kind string) (bool, erro
 		`SELECT COUNT(*) FROM media WHERE uid = ? AND kind = ? AND deleted_at IS NULL`, uid, kind).Scan(&n)
 	return n > 0, err
 }
+
+// FrontExists reports whether a live card in a live deck has this front (case-insensitive for ASCII).
+func (q *Queries) FrontExists(ctx context.Context, front string) (bool, error) {
+	var n int
+	err := q.db.QueryRowContext(ctx, `
+SELECT COUNT(*) FROM cards c JOIN decks d ON d.id = c.deck_id
+WHERE c.deleted_at IS NULL AND d.deleted_at IS NULL AND c.front = ? COLLATE NOCASE`, front).Scan(&n)
+	return n > 0, err
+}
+
+// DeckFronts returns the fronts of a deck's live cards, newest first.
+func (q *Queries) DeckFronts(ctx context.Context, deckID int64, limit int) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, `
+SELECT front FROM cards WHERE deck_id = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT ?`, deckID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []string{}
+	for rows.Next() {
+		var f string
+		if err := rows.Scan(&f); err != nil {
+			return nil, err
+		}
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}
