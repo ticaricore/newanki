@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "server",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["-C", "server", "run", "./cmd/newanki", "serve", "-dev", "-data", "../data", "-addr", "127.0.0.1:8080"],
+      "port": 8080
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "web", "dev"],
+      "port": 5174
+    }
+  ]
+}

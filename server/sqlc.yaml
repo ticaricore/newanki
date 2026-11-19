@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: sqlite
+    schema: internal/db/maindb/migrations
+    queries: internal/db/maindb/queries
+    gen:
+      go:
+        package: maindb
+        out: internal/db/maindb
+        emit_empty_slices: true
+  - engine: sqlite
+    schema: internal/db/userdb/migrations
+    queries: internal/db/userdb/queries
+    gen:
+      go:
+        package: userdb
+        out: internal/db/userdb
+        emit_empty_slices: true

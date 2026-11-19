@@ -1,0 +1,427 @@
+/* NewAnki — dark-glass design system (ported from the Claude Design artifact: project/app.css). */
+@import 'tailwindcss';
+
+@import '@fontsource/geist-sans/300.css';
+@import '@fontsource/geist-sans/400.css';
+@import '@fontsource/geist-sans/500.css';
+@import '@fontsource/geist-sans/600.css';
+@import '@fontsource/geist-sans/700.css';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
+@import '@fontsource/geist-mono/600.css';
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
+@import '@fontsource/amiri-quran/400.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/newsreader/400.css';
+@import '@fontsource/newsreader/500.css';
+@import '@fontsource/newsreader/600.css';
+
+/* ── Tokens ──────────────────────────────────────────────────────────────── */
+:root {
+  --na-bg-0: #07091a;
+  --na-bg-1: #0d1230;
+  --na-bg-2: #161a3f;
+  --na-accent: #34d399;
+  --na-accent-2: #10b981;
+  --na-accent-soft: color-mix(in oklab, var(--na-accent) 16%, transparent);
+  --na-accent-border: color-mix(in oklab, var(--na-accent) 32%, transparent);
+  --na-glass: rgba(255, 255, 255, 0.06);
+  --na-glass-strong: rgba(255, 255, 255, 0.1);
+  --na-glass-border: rgba(255, 255, 255, 0.1);
+  --na-glass-border-strong: rgba(255, 255, 255, 0.18);
+  --na-track: rgba(255, 255, 255, 0.08);
+  --na-text: #f4f6fb;
+  --na-text-2: rgba(244, 246, 251, 0.72);
+  --na-text-3: rgba(244, 246, 251, 0.52);
+  --na-text-4: rgba(244, 246, 251, 0.34);
+  --na-danger: #fb7185;
+  --na-warn: #fcd34d;
+  --na-info: #60a5fa;
+  --na-purple: #a78bfa;
+  --na-orange: #fb923c;
+  --na-pink: #f472b6;
+  --na-shadow: 0 12px 36px rgba(0, 0, 0, 0.32);
+
+  --na-radius-card: 22px;
+  --na-radius-tile: 18px;
+  --na-gap: 1; /* density multiplier */
+
+  --na-font-display: 'Sora', 'Geist Sans', -apple-system, system-ui, sans-serif;
+  --na-font-body: 'Geist Sans', -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --na-font-mono: 'Geist Mono', ui-monospace, monospace;
+  --na-font-arabic: 'Amiri Quran', 'Scheherazade New', 'Noto Naskh Arabic', serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* Safe areas (iOS notch / home indicator). */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --tabbar-h: 64px;
+  --tabbar-space: calc(var(--tabbar-h) + max(var(--sab), 12px) + 28px);
+
+  color-scheme: dark;
+}
+
+[data-na-theme='light'] {
+  --na-bg-0: #f5f4f0;
+  --na-bg-1: #eae7de;
+  --na-bg-2: #e1ded1;
+  --na-glass: rgba(255, 255, 255, 0.55);
+  --na-glass-strong: rgba(255, 255, 255, 0.78);
+  --na-glass-border: rgba(15, 23, 42, 0.06);
+  --na-glass-border-strong: rgba(15, 23, 42, 0.12);
+  --na-track: rgba(15, 23, 42, 0.08);
+  --na-text: #0f172a;
+  --na-text-2: rgba(15, 23, 42, 0.72);
+  --na-text-3: rgba(15, 23, 42, 0.5);
+  --na-text-4: rgba(15, 23, 42, 0.32);
+  --na-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  color-scheme: light;
+}
+
+[data-na-theme='oled'] {
+  --na-bg-0: #000000;
+  --na-bg-1: #050505;
+  --na-bg-2: #0a0a0a;
+  --na-glass: rgba(255, 255, 255, 0.04);
+  --na-glass-strong: rgba(255, 255, 255, 0.08);
+  --na-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-na-density='compact'] {
+  --na-radius-card: 18px;
+  --na-gap: 0.8;
+}
+[data-na-density='spacious'] {
+  --na-radius-card: 26px;
+  --na-gap: 1.2;
+}
+
+/* Expose tokens to Tailwind utilities (bg-na-glass, text-na-text-3, font-display, …). */
+@theme inline {
+  --color-na-bg-0: var(--na-bg-0);
+  --color-na-bg-1: var(--na-bg-1);
+  --color-na-accent: var(--na-accent);
+  --color-na-accent-soft: var(--na-accent-soft);
+  --color-na-glass: var(--na-glass);
+  --color-na-glass-strong: var(--na-glass-strong);
+  --color-na-border: var(--na-glass-border);
+  --color-na-border-strong: var(--na-glass-border-strong);
+  --color-na-text: var(--na-text);
+  --color-na-text-2: var(--na-text-2);
+  --color-na-text-3: var(--na-text-3);
+  --color-na-text-4: var(--na-text-4);
+  --color-na-danger: var(--na-danger);
+  --color-na-warn: var(--na-warn);
+  --color-na-info: var(--na-info);
+  --color-na-purple: var(--na-purple);
+  --color-na-orange: var(--na-orange);
+  --color-na-pink: var(--na-pink);
+  --font-display: var(--na-font-display);
+  --font-body: var(--na-font-body);
+  --font-mono: var(--na-font-mono);
+  --font-arabic: var(--na-font-arabic);
+  --radius-card: var(--na-radius-card);
+  --radius-tile: var(--na-radius-tile);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    background: var(--na-bg-0);
+  }
+  body {
+    margin: 0;
+    font-family: var(--na-font-body);
+    color: var(--na-text);
+    background: var(--na-bg-0);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;
+    overscroll-behavior: none;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  button:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--na-accent);
+    outline-offset: 2px;
+  }
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Backdrop ────────────────────────────────────────────────────────────── */
+@layer components {
+  .na-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 12% 8%, color-mix(in oklab, var(--na-accent) 38%, transparent) 0%, transparent 65%),
+      radial-gradient(50% 40% at 88% 22%, color-mix(in oklab, var(--na-purple) 32%, transparent) 0%, transparent 70%),
+      radial-gradient(55% 45% at 100% 100%, color-mix(in oklab, #60a5fa 26%, transparent) 0%, transparent 72%),
+      radial-gradient(70% 50% at 50% 105%, color-mix(in oklab, var(--na-accent) 22%, transparent) 0%, transparent 70%),
+      linear-gradient(180deg, var(--na-bg-1) 0%, var(--na-bg-0) 60%);
+  }
+  [data-na-theme='oled'] .na-mesh {
+    opacity: 0.55;
+    background-color: #000;
+  }
+  [data-na-theme='light'] .na-mesh {
+    background:
+      radial-gradient(60% 45% at 12% 8%, color-mix(in oklab, var(--na-accent) 32%, transparent) 0%, transparent 65%),
+      radial-gradient(50% 40% at 88% 22%, color-mix(in oklab, var(--na-purple) 22%, transparent) 0%, transparent 70%),
+      linear-gradient(180deg, #faf8f2 0%, #eae7de 100%);
+  }
+  .na-grain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    opacity: 0.18;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.6'/></svg>");
+  }
+
+  /* ── Glass primitives ── */
+  .na-glass {
+    position: relative;
+    background: var(--na-glass);
+    border: 0.5px solid var(--na-glass-border);
+    border-radius: var(--na-radius-card);
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.16) inset,
+      var(--na-shadow);
+  }
+  .na-glass--strong {
+    background: var(--na-glass-strong);
+    border-color: var(--na-glass-border-strong);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+  }
+  .na-glass--flat {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  }
+  [data-na-vd='minimal'] .na-mesh {
+    opacity: 0.35;
+  }
+  [data-na-vd='minimal'] .na-glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+  [data-na-theme='light'][data-na-vd='minimal'] .na-glass {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  [data-na-vd='character'] .na-mesh {
+    opacity: 1;
+    filter: saturate(1.3);
+  }
+  [data-na-vd='character'] .na-glass {
+    background: var(--na-glass-strong);
+  }
+
+  /* ── Pills ── */
+  .na-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--na-glass);
+    border: 0.5px solid var(--na-glass-border);
+    color: var(--na-text-2);
+    white-space: nowrap;
+  }
+
+  /* ── Buttons ── */
+  .na-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    height: 48px;
+    padding: 0 18px;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    border: 0.5px solid var(--na-glass-border-strong);
+    background: var(--na-glass-strong);
+    color: var(--na-text);
+    transition:
+      transform 120ms var(--ease-out),
+      background 120ms;
+  }
+  @media (hover: hover) {
+    .na-btn:hover:not(:disabled) {
+      background: color-mix(in oklab, var(--na-glass-strong) 100%, white 6%);
+    }
+  }
+  .na-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .na-btn--primary {
+    background: linear-gradient(180deg, var(--na-accent) 0%, color-mix(in oklab, var(--na-accent) 70%, #047857) 100%);
+    color: #04231a;
+    border-color: rgba(0, 0, 0, 0.18);
+    box-shadow:
+      0 6px 18px color-mix(in oklab, var(--na-accent) 35%, transparent),
+      0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  }
+  @media (hover: hover) {
+    .na-btn--primary:hover:not(:disabled) {
+      background: linear-gradient(180deg, var(--na-accent) 0%, color-mix(in oklab, var(--na-accent) 80%, #047857) 100%);
+    }
+  }
+  .na-btn--danger {
+    background: color-mix(in oklab, var(--na-danger) 14%, transparent);
+    border-color: color-mix(in oklab, var(--na-danger) 35%, transparent);
+    color: var(--na-danger);
+  }
+  .na-btn--ghost {
+    background: transparent;
+    border-color: var(--na-glass-border);
+  }
+  .na-btn--icon {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  /* ── Inputs ── */
+  .na-input {
+    width: 100%;
+    min-height: 44px;
+    background: var(--na-glass);
+    border: 0.5px solid var(--na-glass-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 16px; /* ≥16px prevents iOS zoom on focus */
+    color: var(--na-text);
+    outline: none;
+    transition:
+      border-color 120ms,
+      background 120ms,
+      box-shadow 120ms;
+  }
+  .na-input::placeholder {
+    color: var(--na-text-4);
+  }
+  .na-input:focus {
+    border-color: var(--na-accent-border);
+    background: var(--na-glass-strong);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--na-accent) 15%, transparent);
+  }
+  .na-input[aria-invalid='true'] {
+    border-color: color-mix(in oklab, var(--na-danger) 55%, transparent);
+  }
+  textarea.na-input {
+    resize: none;
+    line-height: 1.5;
+  }
+
+  /* ── Type ── */
+  .na-mono {
+    font-family: var(--na-font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .na-display {
+    font-family: var(--na-font-display);
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+  .na-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--na-text-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .na-arabic {
+    font-family: var(--na-font-arabic);
+    direction: rtl;
+    letter-spacing: 0;
+  }
+
+  /* ── Entrance animation ── */
+  .na-enter > * {
+    animation: na-fade-up 280ms var(--ease-soft) both;
+  }
+  .na-enter > *:nth-child(2) { animation-delay: 40ms; }
+  .na-enter > *:nth-child(3) { animation-delay: 80ms; }
+  .na-enter > *:nth-child(4) { animation-delay: 120ms; }
+  .na-enter > *:nth-child(5) { animation-delay: 160ms; }
+  .na-enter > *:nth-child(6) { animation-delay: 200ms; }
+  .na-enter > *:nth-child(7) { animation-delay: 240ms; }
+}
+
+@keyframes na-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes na-pulse {
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .na-enter > * {
+    animation: none;
+  }
+  * {
+    transition-duration: 0ms !important;
+  }
+}

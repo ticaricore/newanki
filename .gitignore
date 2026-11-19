@@ -1,0 +1,20 @@
+# data (SQLite files, media)
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# web
+web/node_modules/
+web/dist/
+web/dev-dist/
+web/src/routeTree.gen.ts
+web/*.tsbuildinfo
+
+# embedded build output (keep the placeholder)
+server/internal/web/dist/*
+!server/internal/web/dist/.gitkeep
+
+# binaries
+/bin/
+.DS_Store
