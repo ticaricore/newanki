@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '@/api/client'
-import { useCreateDeck, usePatchDeck } from '@/api/queries'
+import { useCreateCategory, useCreateDeck, usePatchDeck } from '@/api/queries'
 import type { DeckDTO } from '@/api/types.gen'
 import { Icon } from '@/components/icons'
 import { Button, Label } from '@/components/ui/glass'
 import { FormError, TextInput } from '@/components/ui/form'
-import { NA_CAT, tint } from '@/components/ui/categories'
+import { tint } from '@/components/ui/categories'
 import { Sheet } from '@/components/ui/Sheet'
 import { DECK_COLORS, DECK_ICONS } from './deckIcon'
+import { useCategories } from './useCategories'
 
 /** Create or edit a deck in a bottom sheet. */
 export function DeckSheet({
@@ -17,6 +18,10 @@ export function DeckSheet({
   const [category, setCategory] = useState('')
   const [color, setColor] = useState(DECK_COLORS[0]!)
   const [icon, setIcon] = useState('textT')
+  const [adding, setAdding] = useState(false)
+  const [newCat, setNewCat] = useState('')
+  const categories = useCategories()
+  const createCat = useCreateCategory()
   const create = useCreateDeck()
   const patch = usePatchDeck()
   const m = deck ? patch : create
@@ -27,16 +32,23 @@ export function DeckSheet({
     setCategory(deck?.category ?? '')
     setColor(deck?.color ?? DECK_COLORS[0]!)
     setIcon(deck?.icon || 'textT')
+    setAdding(false)
+    setNewCat('')
     create.reset()
     patch.reset()
+    createCat.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, deck])
 
-  const pickCategory = (k: string) => {
-    setCategory(k === category ? '' : k)
-    const c = NA_CAT[k]?.color
-    if (c && k !== category) setColor(c)
+  const pickCategory = (k: string) => setCategory(k === category ? '' : k)
+
+  const addCategory = async () => {
+    const c = await createCat.mutateAsync({ name: newCat.trim() })
+    setCategory(c.uid)
+    setAdding(false)
+    setNewCat('')
   }
+  const catErr = createCat.error instanceof ApiError ? createCat.error : null
 
   const save = async () => {
     const body = { name: name.trim(), category, color, icon }
@@ -59,23 +71,60 @@ export function DeckSheet({
 
         <div>
           <Label>Kategori</Label>
-          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-            {Object.entries(NA_CAT).map(([k, c]) => {
-              const active = k === category
+          <div className="-mx-1 flex flex-wrap gap-1.5 px-1 pb-1">
+            {categories.list.map((c) => {
+              const active = c.uid === category
               return (
                 <button
-                  key={k}
+                  key={c.uid}
                   type="button"
-                  onClick={() => pickCategory(k)}
+                  onClick={() => pickCategory(c.uid)}
+                  aria-pressed={active}
                   className="na-glass inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 text-xs font-semibold"
                   style={{ borderRadius: 999, background: active ? tint(c.color, 18) : undefined, borderColor: active ? tint(c.color, 40) : undefined, color: active ? c.color : 'var(--na-text-2)' }}
                 >
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: c.color }} />
-                  {c.label}
+                  {c.name}
                 </button>
               )
             })}
+            {!adding ? (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="na-glass inline-flex shrink-0 items-center gap-1 px-3.5 py-2 text-xs font-semibold"
+                style={{ borderRadius: 999, color: 'var(--na-text-3)', borderStyle: 'dashed' }}
+              >
+                <Icon name="plus" size={13} strokeWidth={2.2} />
+                Yeni
+              </button>
+            ) : null}
           </div>
+          {adding ? (
+            <div className="mt-2 flex items-start gap-2">
+              <div className="flex-1">
+                <TextInput
+                  label="Yeni kategori"
+                  name="new-category"
+                  value={newCat}
+                  onChange={(e) => setNewCat(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return
+                    e.preventDefault()
+                    if (newCat.trim()) void addCategory().catch(() => {})
+                  }}
+                  placeholder="ör. Fransızca"
+                  maxLength={40}
+                  autoFocus
+                  error={catErr ? catErr.fields.name ?? catErr.message : undefined}
+                />
+              </div>
+              <Button className="mt-[22px]" disabled={!newCat.trim() || createCat.isPending} onClick={() => void addCategory().catch(() => {})}>
+                {createCat.isPending ? '…' : 'Ekle'}
+              </Button>
+              <Button variant="ghost" iconOnly icon="close" aria-label="Vazgeç" className="mt-[22px]" onClick={() => { setAdding(false); setNewCat(''); createCat.reset() }} />
+            </div>
+          ) : null}
         </div>
 
         <div>

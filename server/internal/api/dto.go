@@ -72,7 +72,7 @@ type SettingsPatch struct {
 type DeckDTO struct {
 	UID           string `json:"uid"`
 	Name          string `json:"name"`
-	Category      string `json:"category"`
+	Category      string `json:"category"` // category uid, "" for none
 	Color         string `json:"color"`
 	Icon          string `json:"icon"`
 	CardCount     int64  `json:"card_count"`
@@ -103,6 +103,32 @@ type DeckPatch struct {
 	Category *string `json:"category,omitempty" tstype:",optional"`
 	Color    *string `json:"color,omitempty" tstype:",optional"`
 	Icon     *string `json:"icon,omitempty" tstype:",optional"`
+}
+
+// CategoryDTO is one of the user's deck categories. Decks refer to it by uid (DeckDTO.Category).
+type CategoryDTO struct {
+	UID       string `json:"uid"`
+	Name      string `json:"name"`
+	Color     string `json:"color"`
+	DeckCount int64  `json:"deck_count"`
+}
+
+// CategoryListResponse is returned by GET /categories, in the user's order.
+type CategoryListResponse struct {
+	Categories []CategoryDTO `json:"categories"`
+}
+
+// CategoryInput is the body of POST /categories. Color defaults to the next palette color.
+type CategoryInput struct {
+	UID   *string `json:"uid,omitempty" tstype:",optional"`
+	Name  string  `json:"name"`
+	Color *string `json:"color,omitempty" tstype:",optional"`
+}
+
+// CategoryPatch is the body of PATCH /categories/{uid}.
+type CategoryPatch struct {
+	Name  *string `json:"name,omitempty" tstype:",optional"`
+	Color *string `json:"color,omitempty" tstype:",optional"`
 }
 
 // CardDTO is a card with its scheduling state.

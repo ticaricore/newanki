@@ -121,24 +121,36 @@ func TestFullFlow(t *testing.T) {
 	e := newEnv(t)
 	admin := e.client()
 
-	// Bootstrap admin must change the default password before anything else.
+	// Bootstrap admin can work right away; changing the default password is optional.
 	admin.must(401, "POST", "/auth/login", LoginRequest{Email: "admin@newanki.local", Password: "wrong"}, nil)
 	var me MeResponse
 	admin.must(200, "POST", "/auth/login", LoginRequest{Email: "ADMIN@newanki.local", Password: "Admin123!"}, &me)
-	if !me.User.MustChangePassword || me.User.Role != "admin" {
+	if me.User.MustChangePassword || me.User.Role != "admin" {
 		t.Fatalf("bootstrap admin = %+v", me.User)
 	}
+	admin.must(200, "GET", "/admin/users", nil, nil)
+	admin.must(400, "PATCH", "/me/password", ChangePasswordRequest{CurrentPassword: "Admin123!", NewPassword: "Admin123!"}, nil)
+	admin.must(204, "PATCH", "/me/password", ChangePasswordRequest{CurrentPassword: "Admin123!", NewPassword: "Yeni-Sifre-2026"}, nil)
+
+	// A user created with "must change password" is blocked until they do.
+	tr := true
+	admin.must(201, "POST", "/admin/users", AdminUserCreate{Email: "gecici@example.com", Name: "Geçici", Password: "Parola123", Role: "user", MustChangePassword: &tr}, nil)
+	tmp := e.client()
+	tmp.must(200, "POST", "/auth/login", LoginRequest{Email: "gecici@example.com", Password: "Parola123"}, &me)
+	if !me.User.MustChangePassword {
+		t.Fatalf("temp user = %+v", me.User)
+	}
 	var errBody ErrorBody
-	admin.must(403, "GET", "/admin/users", nil, &errBody)
+	tmp.must(403, "GET", "/decks", nil, &errBody)
 	if errBody.Error.Code != "password_change_required" {
 		t.Fatalf("code = %q", errBody.Error.Code)
 	}
-	admin.must(400, "PATCH", "/me/password", ChangePasswordRequest{CurrentPassword: "Admin123!", NewPassword: "Admin123!"}, nil)
-	admin.must(204, "PATCH", "/me/password", ChangePasswordRequest{CurrentPassword: "Admin123!", NewPassword: "Yeni-Sifre-2026"}, nil)
-	admin.must(200, "GET", "/me", nil, &me)
+	tmp.must(204, "PATCH", "/me/password", ChangePasswordRequest{CurrentPassword: "Parola123", NewPassword: "Yeni-Parola-1"}, nil)
+	tmp.must(200, "GET", "/me", nil, &me)
 	if me.User.MustChangePassword {
 		t.Fatal("must_change_password still set")
 	}
+	admin.must(200, "GET", "/me", nil, &me)
 
 	// CSRF header is required on writes.
 	req, _ := http.NewRequest("POST", e.ts.URL+"/api/v1/decks", bytes.NewReader([]byte(`{}`)))
@@ -167,7 +179,7 @@ func TestFullFlow(t *testing.T) {
 
 	deckUID := uuid.Must(uuid.NewV7()).String()
 	var deck DeckDTO
-	c1.must(201, "POST", "/decks", DeckInput{UID: &deckUID, Name: "English B2", Category: "ingilizce", Color: "#60a5fa"}, &deck)
+	c1.must(201, "POST", "/decks", DeckInput{UID: &deckUID, Name: "English B2", Color: "#60a5fa"}, &deck)
 	c1.must(200, "POST", "/decks", DeckInput{UID: &deckUID, Name: "English B2", Color: "#60A5FA"}, nil) // idempotent
 	if deck.Color != "#60A5FA" {
 		t.Fatalf("color = %s", deck.Color)
@@ -316,7 +328,7 @@ func TestFullFlow(t *testing.T) {
 	}
 	var stats AdminStats
 	admin.must(200, "GET", "/admin/stats", nil, &stats)
-	if stats.Users != 2 || stats.Admins != 1 {
+	if stats.Users != 3 || stats.Admins != 1 { // admin, gecici and one remaining user
 		t.Fatalf("admin stats = %+v", stats)
 	}
 }

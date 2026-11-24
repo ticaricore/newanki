@@ -7,7 +7,8 @@ import { Icon } from '@/components/icons'
 import { Section } from '@/components/layout/AppShell'
 import { TopBar, TopBarIcon } from '@/components/layout/TopBar'
 import { Button, CategoryDot, EmptyState, GlassCard, GlassProgress, IconBadge, Pill, Spinner } from '@/components/ui/glass'
-import { NA_CAT, categoryLabel, tint } from '@/components/ui/categories'
+import { tint } from '@/components/ui/categories'
+import { useCategories } from '@/features/decks/useCategories'
 import { DeckSheet } from '@/features/decks/DeckSheet'
 import { deckIcon } from '@/features/decks/deckIcon'
 import { ago } from '@/lib/format'
@@ -25,7 +26,9 @@ function DecksScreen() {
 
   const list = decks ?? []
   const totalDue = list.reduce((a, d) => a + d.due_count, 0)
-  const cats = useMemo(() => [...new Set(list.map((d) => d.category).filter((c) => c && NA_CAT[c]))], [list])
+  const categories = useCategories()
+  // Category chips in the user's order, only for categories that have decks.
+  const cats = useMemo(() => categories.list.filter((c) => list.some((d) => d.category === c.uid)).map((c) => c.uid), [categories.list, list])
   const filtered = filter === 'all' ? list : filter === 'due' ? list.filter((d) => d.due_count > 0) : list.filter((d) => d.category === filter)
 
   return (
@@ -55,8 +58,8 @@ function DecksScreen() {
                   color: active ? 'var(--na-accent)' : 'var(--na-text-2)',
                 }}
               >
-                {NA_CAT[c] ? <CategoryDot k={c} size={6} /> : null}
-                {c === 'all' ? 'Tümü' : c === 'due' ? 'Bugün gelen' : categoryLabel(c)}
+                {categories.byUid.get(c) ? <CategoryDot color={categories.byUid.get(c)!.color} size={6} /> : null}
+                {c === 'all' ? 'Tümü' : c === 'due' ? 'Bugün gelen' : categories.label(c)}
               </button>
             )
           })}
@@ -102,15 +105,16 @@ function DecksScreen() {
 
 function DeckCard({ deck, onOpen, onStudy }: { deck: DeckDTO; onOpen: () => void; onStudy: () => void }) {
   const pct = deck.card_count ? deck.learned_count / deck.card_count : 0
+  const { label } = useCategories()
   return (
     <GlassCard className="overflow-hidden p-4" radius={22}>
       <div aria-hidden className="pointer-events-none absolute -top-5 -right-5 h-[100px] w-[100px]" style={{ background: `radial-gradient(circle, ${tint(deck.color, 35)}, transparent 70%)`, filter: 'blur(20px)' }} />
       <button type="button" onClick={onOpen} className="relative flex w-full items-start gap-3 border-0 bg-transparent p-0 text-left">
-        <IconBadge icon={deckIcon(deck.icon, deck.category)} color={deck.color} size={44} iconSize={20} radius={14} />
+        <IconBadge icon={deckIcon(deck.icon)} color={deck.color} size={44} iconSize={20} radius={14} />
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex items-center gap-1.5">
             <CategoryDot color={deck.color} size={6} />
-            <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{categoryLabel(deck.category)}</span>
+            <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{label(deck.category)}</span>
           </div>
           <div className="mb-0.5 text-base leading-tight font-semibold tracking-[-0.01em]">{deck.name}</div>
           <div className="text-[11px] text-na-text-3">son çalışma · {ago(deck.last_studied_at)}</div>

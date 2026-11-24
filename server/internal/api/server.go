@@ -80,6 +80,10 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET "+p+"/settings", s.authed(levelUser, true, s.handleGetSettings))
 	mux.Handle("PATCH "+p+"/settings", s.authed(levelUser, true, s.handlePatchSettings))
 
+	mux.Handle("GET "+p+"/categories", s.authed(levelUser, true, s.handleListCategories))
+	mux.Handle("POST "+p+"/categories", s.authed(levelUser, true, s.handleCreateCategory))
+	mux.Handle("PATCH "+p+"/categories/{uid}", s.authed(levelUser, true, s.handlePatchCategory))
+	mux.Handle("DELETE "+p+"/categories/{uid}", s.authed(levelUser, true, s.handleDeleteCategory))
 	mux.Handle("GET "+p+"/decks", s.authed(levelUser, true, s.handleListDecks))
 	mux.Handle("POST "+p+"/decks", s.authed(levelUser, true, s.handleCreateDeck))
 	mux.Handle("GET "+p+"/decks/{uid}", s.authed(levelUser, true, s.handleGetDeck))

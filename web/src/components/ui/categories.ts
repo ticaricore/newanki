@@ -1,24 +1,9 @@
 import type { IconName } from '../icons'
 
-/** Deck categories from the design (Vento category palette). Unknown categories fall back to neutral. */
-export const NA_CAT: Record<string, { color: string; label: string }> = {
-  ingilizce: { color: '#60A5FA', label: 'İngilizce' },
-  almanca: { color: '#A78BFA', label: 'Almanca' },
-  kuran: { color: '#34D399', label: 'Kurʼan' },
-  biyoloji: { color: '#F472B6', label: 'Biyoloji' },
-  tarih: { color: '#FCD34D', label: 'Tarih' },
-  felsefe: { color: '#FB923C', label: 'Felsefe' },
-}
-
 export const NEUTRAL = '#94A3B8'
 
-export function categoryColor(k: string | undefined) {
-  return (k && NA_CAT[k]?.color) || NEUTRAL
-}
-
-export function categoryLabel(k: string | undefined) {
-  return (k && NA_CAT[k]?.label) || k || 'Genel'
-}
+/** Colors offered for categories (the server picks from the same palette when none is given). */
+export const CATEGORY_COLORS = ['#F87171', '#60A5FA', '#2DD4BF', '#A78BFA', '#FCD34D', '#F472B6', '#FB923C', '#34D399', '#818CF8', '#94A3B8']
 
 export type CardType = 'word' | 'audio' | 'image' | 'quran'
 

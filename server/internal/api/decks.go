@@ -19,12 +19,9 @@ func deckDTO(d userdb.Deck, c userdb.DeckCounts) DeckDTO {
 	}
 }
 
-func validateDeck(name, category, color, icon string) error {
+func validateDeck(name, color, icon string) error {
 	if n := utf8.RuneCountInString(strings.TrimSpace(name)); n == 0 || n > 120 {
 		return errField("name", "deste adı 1–120 karakter olmalı")
-	}
-	if utf8.RuneCountInString(category) > 40 {
-		return errField("category", "kategori en fazla 40 karakter olabilir")
 	}
 	if !hexColor.MatchString(color) {
 		return errField("color", "#RRGGBB biçiminde olmalı")
@@ -33,6 +30,23 @@ func validateDeck(name, category, color, icon string) error {
 		return errField("icon", "ikon adı en fazla 40 karakter olabilir")
 	}
 	return nil
+}
+
+// deckCategory checks that a deck's category is "" or one of the user's categories, and normalizes its uid.
+func deckCategory(r *http.Request, rc *reqCtx, raw string) (string, error) {
+	if strings.TrimSpace(raw) == "" {
+		return "", nil
+	}
+	uid, err := parseUID(raw, "category")
+	if err != nil {
+		return "", err
+	}
+	if _, err := rc.udb.Q.GetCategoryByUID(r.Context(), uid); errors.Is(err, sql.ErrNoRows) {
+		return "", errField("category", "kategori bulunamadı")
+	} else if err != nil {
+		return "", err
+	}
+	return uid, nil
 }
 
 // getDeck loads a live deck by its {uid} path value.
@@ -99,7 +113,10 @@ func (s *Server) handleCreateDeck(w http.ResponseWriter, r *http.Request, rc *re
 	if in.Color == "" {
 		in.Color = "#34D399"
 	}
-	if err := validateDeck(in.Name, in.Category, in.Color, in.Icon); err != nil {
+	if err := validateDeck(in.Name, in.Color, in.Icon); err != nil {
+		return err
+	}
+	if in.Category, err = deckCategory(r, rc, in.Category); err != nil {
 		return err
 	}
 	// Idempotent: a retried create with the same uid returns the existing deck.
@@ -145,7 +162,9 @@ func (s *Server) handlePatchDeck(w http.ResponseWriter, r *http.Request, rc *req
 		d.Name = strings.TrimSpace(*in.Name)
 	}
 	if in.Category != nil {
-		d.Category = *in.Category
+		if d.Category, err = deckCategory(r, rc, *in.Category); err != nil {
+			return err
+		}
 	}
 	if in.Color != nil {
 		d.Color = strings.ToUpper(*in.Color)
@@ -153,7 +172,7 @@ func (s *Server) handlePatchDeck(w http.ResponseWriter, r *http.Request, rc *req
 	if in.Icon != nil {
 		d.Icon = *in.Icon
 	}
-	if err := validateDeck(d.Name, d.Category, d.Color, d.Icon); err != nil {
+	if err := validateDeck(d.Name, d.Color, d.Icon); err != nil {
 		return err
 	}
 	d, err = rc.udb.Q.UpdateDeck(r.Context(), userdb.UpdateDeckParams{

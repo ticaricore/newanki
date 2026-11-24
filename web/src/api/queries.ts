@@ -3,7 +3,7 @@ import { infiniteQueryOptions, queryOptions, useMutation, useQueryClient } from 
 import { api, uuidv7 } from './client'
 import { clearOfflineData, setOfflineUser } from '@/offline/sync'
 import type {
-  AIGenerateRequest, AIGenerateResponse, AIStatus, AdminStats, AdminUserCreate, AdminUserDTO, AdminUserListResponse, AdminUserPatch, AppSettings, CardDTO, CardInput,
+  AIGenerateRequest, AIGenerateResponse, AIStatus, AdminStats, AdminUserCreate, AdminUserDTO, AdminUserListResponse, AdminUserPatch, AppSettings, CardDTO, CardInput, CategoryDTO, CategoryInput, CategoryListResponse, CategoryPatch,
   CardListResponse, CardPatch, ChangePasswordRequest, DaysResponse, DeckDTO, DeckInput, DeckListResponse, DeckPatch,
   DistributionResponse, LoginRequest, MediaDTO, MeResponse, SettingsPatch, SettingsResponse, StatsSummary,
 } from './types.gen'
@@ -11,6 +11,7 @@ import type {
 export const qk = {
   me: ['me'] as const,
   settings: ['settings'] as const,
+  categories: ['categories'] as const,
   decks: ['decks'] as const,
   deck: (uid: string) => ['decks', uid] as const,
   cards: (p: CardsParams) => ['cards', p] as const,
@@ -36,6 +37,12 @@ export const settingsQuery = queryOptions({
 export const decksQuery = queryOptions({
   queryKey: qk.decks,
   queryFn: () => api<DeckListResponse>('GET', '/decks').then((r) => r.decks),
+})
+
+export const categoriesQuery = queryOptions({
+  queryKey: qk.categories,
+  queryFn: () => api<CategoryListResponse>('GET', '/categories').then((r) => r.categories),
+  staleTime: 5 * 60_000,
 })
 
 export const deckQuery = (uid: string) =>
@@ -179,6 +186,32 @@ export function usePatchDeck() {
     mutationFn: ({ uid, ...body }: DeckPatch & { uid: string }) => api<DeckDTO>('PATCH', `/decks/${uid}`, body),
     onSuccess: inv,
   })
+}
+
+function useInvalidateCategories() {
+  const qc = useQueryClient()
+  return () => Promise.all([qc.invalidateQueries({ queryKey: qk.categories }), qc.invalidateQueries({ queryKey: qk.decks })])
+}
+
+export function useCreateCategory() {
+  const inv = useInvalidateCategories()
+  return useMutation({
+    mutationFn: (body: CategoryInput) => api<CategoryDTO>('POST', '/categories', { uid: uuidv7(), ...body }),
+    onSuccess: inv,
+  })
+}
+
+export function usePatchCategory() {
+  const inv = useInvalidateCategories()
+  return useMutation({
+    mutationFn: ({ uid, ...body }: CategoryPatch & { uid: string }) => api<CategoryDTO>('PATCH', `/categories/${uid}`, body),
+    onSuccess: inv,
+  })
+}
+
+export function useDeleteCategory() {
+  const inv = useInvalidateCategories()
+  return useMutation({ mutationFn: (uid: string) => api<void>('DELETE', `/categories/${uid}`), onSuccess: inv })
 }
 
 export function useDeleteDeck() {

@@ -192,12 +192,12 @@ func (s *Service) EnsureBootstrapAdmin(ctx context.Context, email, password stri
 		Name:               "Admin",
 		Password:           password,
 		Role:               "admin",
-		MustChangePassword: true,
+		MustChangePassword: false,
 	})
 	if err != nil {
 		return false, fmt.Errorf("bootstrap admin: %w", err)
 	}
-	s.Log.Warn("Varsayılan admin oluşturuldu, ilk girişte şifreyi değiştirin.", "email", u.Email)
+	s.Log.Warn("Varsayılan admin oluşturuldu; varsayılan şifreyi kullanıyorsanız Ayarlar'dan değiştirin.", "email", u.Email)
 	return true, nil
 }
 

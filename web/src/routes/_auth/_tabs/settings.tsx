@@ -2,12 +2,14 @@ import { Children, Fragment, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { meQuery, settingsQuery, useLogout, usePatchSettings } from '@/api/queries'
-import type { SettingsPatch } from '@/api/types.gen'
+import type { CategoryDTO, SettingsPatch } from '@/api/types.gen'
 import { Icon, type IconName } from '@/components/icons'
 import { Section } from '@/components/layout/AppShell'
 import { Avatar, TopBar } from '@/components/layout/TopBar'
 import { Button, GlassCard, GlassSegment, Pill } from '@/components/ui/glass'
-import { tint } from '@/components/ui/categories'
+import { CATEGORY_COLORS, tint } from '@/components/ui/categories'
+import { CategorySheet } from '@/features/decks/CategorySheet'
+import { useCategories } from '@/features/decks/useCategories'
 import { Sheet } from '@/components/ui/Sheet'
 import { ago } from '@/lib/format'
 import { flush, offlineInfo, prepareOffline, useSyncState } from '@/offline/sync'
@@ -105,6 +107,8 @@ function SettingsScreen() {
         </GlassCard>
       </Section>
 
+      <CategoriesSection />
+
       <OfflineSection userUid={user.uid} />
 
       <SettingSection title="Veri">
@@ -166,6 +170,28 @@ function SettingSection({ title, children }: { title: string; children: ReactNod
         ))}
       </GlassCard>
     </Section>
+  )
+}
+
+/** The user's deck categories: rename, recolor, delete, add. */
+function CategoriesSection() {
+  const { list } = useCategories()
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<CategoryDTO | undefined>()
+  const edit = (c?: CategoryDTO) => {
+    setEditing(c)
+    setOpen(true)
+  }
+  return (
+    <>
+      <SettingSection title="Kategoriler">
+        {list.map((c) => (
+          <SettingRow key={c.uid} icon="tag" color={c.color} label={c.name} detail={c.deck_count ? `${c.deck_count} deste` : 'boş'} onClick={() => edit(c)} />
+        ))}
+        <SettingRow icon="plus" color="var(--na-accent)" label="Kategori ekle" onClick={() => edit()} />
+      </SettingSection>
+      <CategorySheet open={open} onOpenChange={setOpen} category={editing} nextColor={CATEGORY_COLORS[list.length % CATEGORY_COLORS.length]} />
+    </>
   )
 }
 

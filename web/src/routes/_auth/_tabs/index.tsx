@@ -6,7 +6,8 @@ import { Section } from '@/components/layout/AppShell'
 import { StudyCTA } from '@/components/layout/BottomTabBar'
 import { Avatar, TopBar, TopBarIcon } from '@/components/layout/TopBar'
 import { CategoryDot, EmptyState, GlassCard, GlassProgress, IconBadge, RingProgress, SectionTitle, StatTile, Button } from '@/components/ui/glass'
-import { categoryLabel, tint } from '@/components/ui/categories'
+import { tint } from '@/components/ui/categories'
+import { useCategories } from '@/features/decks/useCategories'
 import { deckIcon } from '@/features/decks/deckIcon'
 import { compact, percent, todayLong, weekdayShort } from '@/lib/format'
 
@@ -25,6 +26,7 @@ function HomeScreen() {
   const { data: sum } = useQuery(summaryQuery)
   const { data: decks = [] } = useQuery(decksQuery)
   const { data: days = [] } = useQuery(activityQuery(14))
+  const { label } = useCategories()
 
   const name = me?.user.name ?? ''
   const firstName = name.split(' ')[0] ?? ''
@@ -113,11 +115,11 @@ function HomeScreen() {
                 className="na-glass flex w-full items-center gap-3 px-3.5 py-3 text-left"
                 style={{ borderRadius: 18 }}
               >
-                <IconBadge icon={deckIcon(d.icon, d.category)} color={d.color} />
+                <IconBadge icon={deckIcon(d.icon)} color={d.color} />
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 flex items-center gap-1.5">
                     <CategoryDot color={d.color} size={6} />
-                    <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{categoryLabel(d.category)}</span>
+                    <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{label(d.category)}</span>
                   </div>
                   <div className="truncate text-sm font-semibold">{d.name}</div>
                   <div className="mt-1.5">

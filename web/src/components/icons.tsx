@@ -3,13 +3,14 @@ import {
   ArrowLeft, ArrowRight, Bell, Book, Brain, Calendar, Camera, ChartLine, Check, ChevronDown, ChevronLeft,
   ChevronRight, Clock, Download, Ellipsis, Eye, EyeOff, Flame, Funnel, Globe, Heart, House, Image, KeyRound,
   Languages, Layers, LogOut, Mic, Moon, MoveHorizontal, Pause, Pencil, Play, Plus, RefreshCw, Search, Settings,
-  Share2, Shield, Sparkles, Star, Sun, Target, Trash2, Trophy, Type, Upload, User, Volume2, WifiOff, X, Zap, CloudCheck, CloudUpload,
+  Share2, Shield, Sparkles, Star, Sun, Tag, Target, Trash2, Trophy, Type, Upload, User, Volume2, WifiOff, X, Zap, CloudCheck, CloudUpload,
   type LucideIcon,
 } from 'lucide-react'
 
 const ICONS = {
   home: House,
   layers: Layers,
+  tag: Tag,
   brain: Brain,
   chart: ChartLine,
   search: Search,

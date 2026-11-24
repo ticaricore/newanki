@@ -2,12 +2,9 @@ import type { IconName } from '@/components/icons'
 
 const KNOWN: IconName[] = ['textT', 'book', 'image', 'speaker', 'globe', 'brain', 'star', 'heart', 'layers']
 
-/** Deck icon: stored icon if known, else derived from the category like the design does. */
-export function deckIcon(icon: string, category: string): IconName {
-  if ((KNOWN as string[]).includes(icon)) return icon as IconName
-  if (category === 'kuran') return 'book'
-  if (category === 'biyoloji') return 'image'
-  return 'textT'
+/** Deck icon: the stored one if known, else a text icon. */
+export function deckIcon(icon: string): IconName {
+  return (KNOWN as string[]).includes(icon) ? (icon as IconName) : 'textT'
 }
 
 export const DECK_ICONS = KNOWN

@@ -24,16 +24,16 @@ const (
 )
 
 type deck struct {
-	key, name, category, color, icon string
+	key, name, category, color, icon string // category is a category name, created if missing
 }
 
 var decks = []deck{
-	{"eng-b2", "English B2 — Academic", "ingilizce", "#60A5FA", "textT"},
-	{"de-a1", "Deutsch A1 — Grundwortschatz", "almanca", "#A78BFA", "textT"},
-	{"quran", "Kurʼan — Bakara · 1–60", "kuran", "#34D399", "book"},
-	{"bio", "Hücre Biyolojisi", "biyoloji", "#F472B6", "image"},
-	{"tarih", "Osmanlı Tarihi · 1300–1453", "tarih", "#FCD34D", "textT"},
-	{"felsefe", "Antik Felsefe", "felsefe", "#FB923C", "textT"},
+	{"eng-b2", "English B2 — Academic", "İngilizce", "#60A5FA", "textT"},
+	{"de-a1", "Deutsch A1 — Grundwortschatz", "Almanca", "#A78BFA", "textT"},
+	{"quran", "Kurʼan — Bakara · 1–60", "Kurʼan", "#34D399", "book"},
+	{"bio", "Hücre Biyolojisi", "Biyoloji", "#F472B6", "image"},
+	{"tarih", "Osmanlı Tarihi · 1300–1453", "Tarih", "#FCD34D", "textT"},
+	{"felsefe", "Antik Felsefe", "Felsefe", "#FB923C", "textT"},
 }
 
 type card struct {
@@ -94,10 +94,35 @@ func EnsureDemo(ctx context.Context, acc *accounts.Service, log *slog.Logger) er
 	nowMs := now.UnixMilli()
 	sched := srs.New(nil)
 
+	cats, err := q.ListCategories(ctx)
+	if err != nil {
+		return err
+	}
+	catUID := map[string]string{}
+	for _, c := range cats {
+		catUID[c.Name] = c.Uid
+	}
+	for _, d := range decks {
+		if _, ok := catUID[d.category]; ok {
+			continue
+		}
+		pos, err := q.CategoryNextPosition(ctx)
+		if err != nil {
+			return err
+		}
+		c, err := q.CreateCategory(ctx, userdb.CreateCategoryParams{
+			Uid: newUID(), Name: d.category, Color: d.color, Position: pos, CreatedAt: nowMs, UpdatedAt: nowMs,
+		})
+		if err != nil {
+			return err
+		}
+		catUID[c.Name] = c.Uid
+	}
+
 	deckIDs := map[string]int64{}
 	for _, d := range decks {
 		row, err := q.CreateDeck(ctx, userdb.CreateDeckParams{
-			Uid: newUID(), Name: d.name, Category: d.category, Color: d.color, Icon: d.icon, CreatedAt: nowMs, UpdatedAt: nowMs,
+			Uid: newUID(), Name: d.name, Category: catUID[d.category], Color: d.color, Icon: d.icon, CreatedAt: nowMs, UpdatedAt: nowMs,
 		})
 		if err != nil {
 			return err

@@ -79,7 +79,7 @@ export interface SettingsPatch {
 export interface DeckDTO {
   uid: string;
   name: string;
-  category: string;
+  category: string; // category uid, "" for none
   color: string;
   icon: string;
   card_count: number /* int64 */;
@@ -113,6 +113,36 @@ export interface DeckPatch {
   category?: string;
   color?: string;
   icon?: string;
+}
+/**
+ * CategoryDTO is one of the user's deck categories. Decks refer to it by uid (DeckDTO.Category).
+ */
+export interface CategoryDTO {
+  uid: string;
+  name: string;
+  color: string;
+  deck_count: number /* int64 */;
+}
+/**
+ * CategoryListResponse is returned by GET /categories, in the user's order.
+ */
+export interface CategoryListResponse {
+  categories: CategoryDTO[];
+}
+/**
+ * CategoryInput is the body of POST /categories. Color defaults to the next palette color.
+ */
+export interface CategoryInput {
+  uid?: string;
+  name: string;
+  color?: string;
+}
+/**
+ * CategoryPatch is the body of PATCH /categories/{uid}.
+ */
+export interface CategoryPatch {
+  name?: string;
+  color?: string;
 }
 /**
  * CardDTO is a card with its scheduling state.

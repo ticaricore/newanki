@@ -36,6 +36,16 @@ type CardsFt struct {
 	Extra string
 }
 
+type Category struct {
+	ID        int64
+	Uid       string
+	Name      string
+	Color     string
+	Position  int64
+	CreatedAt int64
+	UpdatedAt int64
+}
+
 type Deck struct {
 	ID        int64
 	Uid       string

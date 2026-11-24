@@ -38,7 +38,7 @@ make dev
 ```
 
 - API: http://127.0.0.1:8080, arayüz: http://localhost:5174
-- İlk açılışta admin oluşturulur: `admin@newanki.local` / `Admin123!` (ilk girişte şifre değiştirmek zorunludur). `NEWANKI_ADMIN_EMAIL` / `NEWANKI_ADMIN_PASSWORD` ile değiştirilebilir.
+- İlk açılışta admin oluşturulur: `admin@newanki.local` / `Admin123!` (şifreyi Ayarlar → Hesap'tan değiştirin). `NEWANKI_ADMIN_EMAIL` / `NEWANKI_ADMIN_PASSWORD` ile değiştirilebilir.
 - `-dev` modunda tasarımdaki desteler ve kartlarla bir demo kullanıcı oluşturulur: `demo@newanki.local` / `Demo1234!`
 
 Sorgu veya API tipi değiştiğinde:

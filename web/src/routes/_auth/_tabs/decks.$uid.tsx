@@ -6,7 +6,7 @@ import { Section } from '@/components/layout/AppShell'
 import { TopBar, TopBarIcon } from '@/components/layout/TopBar'
 import { Button, CategoryDot, EmptyState, GlassCard, GlassProgress, IconBadge, Spinner } from '@/components/ui/glass'
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
-import { categoryLabel } from '@/components/ui/categories'
+import { useCategories } from '@/features/decks/useCategories'
 import { CardRow } from '@/features/cards/CardRow'
 import { DeckSheet } from '@/features/decks/DeckSheet'
 import { deckIcon } from '@/features/decks/deckIcon'
@@ -26,6 +26,7 @@ function DeckDetail() {
   const del = useDeleteDeck()
   const [editing, setEditing] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const { label } = useCategories()
 
   if (!deck) return null
   const list = cards.data?.pages.flatMap((p) => p.cards) ?? []
@@ -46,11 +47,11 @@ function DeckDetail() {
       <Section top={6}>
         <GlassCard strong glow={`${deck.color}66`} className="p-[18px]" radius={24}>
           <div className="relative flex items-center gap-3.5">
-            <IconBadge icon={deckIcon(deck.icon, deck.category)} color={deck.color} size={52} iconSize={24} radius={16} />
+            <IconBadge icon={deckIcon(deck.icon)} color={deck.color} size={52} iconSize={24} radius={16} />
             <div className="min-w-0 flex-1">
               <div className="mb-0.5 flex items-center gap-1.5">
                 <CategoryDot color={deck.color} size={6} />
-                <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{categoryLabel(deck.category)}</span>
+                <span className="text-[10px] font-semibold tracking-[0.06em] text-na-text-3 uppercase">{label(deck.category)}</span>
               </div>
               <div className="na-display text-[20px] leading-tight">{deck.name}</div>
               <div className="mt-1 text-[11px] text-na-text-3">son çalışma · {ago(deck.last_studied_at)}</div>

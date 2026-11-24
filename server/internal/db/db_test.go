@@ -169,3 +169,69 @@ func TestManagerDeleteWhileInUse(t *testing.T) {
 		t.Fatalf("OpenCount = %d", m.OpenCount())
 	}
 }
+
+// Decks made with the old fixed category keys keep their category after 0004_categories.
+func TestMigrateUserDBCategories(t *testing.T) {
+	ctx := context.Background()
+	sqlDB, err := Open(ctx, filepath.Join(t.TempDir(), "u.db"), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	migs, err := LoadMigrations(userdb.Migrations, "migrations")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var before []Migration
+	for _, m := range migs {
+		if m.Version < 4 {
+			before = append(before, m)
+		}
+	}
+	if err := Migrate(ctx, sqlDB, before); err != nil {
+		t.Fatal(err)
+	}
+	for i, cat := range []string{"ingilizce", "almanca", "almanca", "Benim konum", ""} {
+		if _, err := sqlDB.ExecContext(ctx, `INSERT INTO decks (uid, name, category, color, icon, created_at, updated_at) VALUES (?, ?, ?, '#000000', '', 1, 1)`,
+			uuid.NewString(), "d"+string(rune('a'+i)), cat); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := Migrate(ctx, sqlDB, migs); err != nil {
+		t.Fatal(err)
+	}
+	q := userdb.New(sqlDB)
+	cats, err := q.ListCategories(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	byUID := map[string]string{}
+	for _, c := range cats {
+		names = append(names, c.Name)
+		byUID[c.Uid] = c.Name
+		if _, err := uuid.Parse(c.Uid); err != nil {
+			t.Fatalf("bad uid %q", c.Uid)
+		}
+	}
+	want := []string{"Türkçe", "İngilizce", "Arapça", "Almanca", "Benim konum"}
+	if len(names) != len(want) {
+		t.Fatalf("categories = %v", names)
+	}
+	for i := range want {
+		if names[i] != want[i] {
+			t.Fatalf("categories = %v, want %v", names, want)
+		}
+	}
+	decks, err := q.ListDecks(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := []string{}
+	for _, d := range decks {
+		got = append(got, byUID[d.Category])
+	}
+	if got[0] != "İngilizce" || got[1] != "Almanca" || got[2] != "Almanca" || got[3] != "Benim konum" || got[4] != "" || decks[4].Category != "" {
+		t.Fatalf("deck categories = %v", got)
+	}
+}

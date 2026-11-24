@@ -4,7 +4,7 @@ import { persistQueryClient, type PersistedClient, type Persister } from '@tanst
 import { idb } from './db'
 
 const KEY = 'query-cache'
-const PERSISTED = new Set(['me', 'settings', 'decks', 'stats', 'card'])
+const PERSISTED = new Set(['me', 'settings', 'categories', 'decks', 'stats', 'card'])
 
 function idbPersister(): Persister {
   let timer: number | undefined

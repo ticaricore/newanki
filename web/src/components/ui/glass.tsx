@@ -1,7 +1,7 @@
 // Glass primitives ported from the design (project/lib/glass.jsx + app.css classes).
 import { useMemo, type ButtonHTMLAttributes, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react'
 import { Icon, type IconName } from '../icons'
-import { categoryColor, tint } from './categories'
+import { tint } from './categories'
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -254,8 +254,7 @@ export function Heatmap({ data, color = 'var(--na-accent)', size = 9, gap = 3, t
 }
 
 // ── CategoryDot ────────────────────────────────────────────────────────────
-export function CategoryDot({ k, color, size = 8 }: { k?: string; color?: string; size?: number }) {
-  const c = color ?? categoryColor(k)
+export function CategoryDot({ color: c, size = 8 }: { color: string; size?: number }) {
   return <span aria-hidden className="inline-block shrink-0 rounded-full" style={{ width: size, height: size, background: c, boxShadow: `0 0 10px ${c}80` }} />
 }
 
