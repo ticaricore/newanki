@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { applyTheme, cachePrefs, loadCachedPrefs, resolveTheme, type ThemePrefs } from './theme'
 
 interface ThemeCtx {
@@ -30,13 +30,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     cachePrefs(prefs)
   }, [prefs, prefersDark])
 
+  // Stable, and a no-op when nothing changes: callers sync server settings from an effect.
+  const setPrefs = useCallback((p: Partial<ThemePrefs>) => {
+    setState((cur) => {
+      const changed = (Object.keys(p) as (keyof ThemePrefs)[]).some((k) => p[k] !== undefined && p[k] !== cur[k])
+      return changed ? { ...cur, ...p } : cur
+    })
+  }, [])
+
   const value = useMemo<ThemeCtx>(
-    () => ({
-      prefs,
-      resolved: resolveTheme(prefs.theme, prefersDark),
-      setPrefs: (p) => setState((cur) => ({ ...cur, ...p })),
-    }),
-    [prefs, prefersDark],
+    () => ({ prefs, resolved: resolveTheme(prefs.theme, prefersDark), setPrefs }),
+    [prefs, prefersDark, setPrefs],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

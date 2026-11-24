@@ -1,0 +1,12 @@
+.git
+.claude
+data
+bin
+web/node_modules
+web/dist
+web/dev-dist
+web/*.tsbuildinfo
+web/src/routeTree.gen.ts
+server/internal/web/dist/*
+!server/internal/web/dist/.gitkeep
+*.md

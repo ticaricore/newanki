@@ -67,6 +67,15 @@ make build
 
 HTTPS arkasında çalıştırın (oturum çerezi varsayılan olarak `Secure`). Ters vekil kullanıyorsanız `-trust-proxy` ekleyin.
 
+### Docker / Dokploy
+
+Kökteki `Dockerfile` arayüzü derleyip binary'ye gömer ve `:8080`'de sunar. Veriler `/var/lib/newanki` altındadır; buraya kalıcı bir volume bağlayın, yoksa her yeniden dağıtımda veriler silinir. Konteyner `uid 10001` ile çalışır: bind mount kullanırsanız klasörün sahibini buna ayarlayın.
+
+```bash
+docker build -t newanki .
+docker run -p 8080:8080 -v newanki-data:/var/lib/newanki -e ANTHROPIC_API_KEY=... newanki
+```
+
 Diğer komutlar:
 
 - `newanki migrate -data …` — tüm kullanıcı veritabanlarını güncel şemaya taşır (normalde açılışta otomatik yapılır).
