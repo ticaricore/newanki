@@ -76,7 +76,7 @@ function AIScreen() {
           <EmptyState icon="sparkle" title={status.data.reason === 'disabled' ? 'AI kapalı' : 'AI hazır değil'}>
             {status.data.reason === 'disabled'
               ? 'Yönetici AI ile kart üretmeyi bu sunucuda kapattı.'
-              : 'Bu sunucuda AI ile üretim yapılandırılmamış. Yöneticinden Claude API anahtarını eklemesini iste.'}
+              : 'Bu sunucuda AI ile üretim yapılandırılmamış. Yöneticinden bir AI API anahtarı (Claude veya DeepSeek) eklemesini iste.'}
           </EmptyState>
         </div>
       ) : (

@@ -7,7 +7,6 @@ package main
 
 import (
 	"bufio"
-	"cmp"
 	"context"
 	"errors"
 	"flag"
@@ -129,11 +128,17 @@ func serve(args []string, log *slog.Logger) error {
 	}
 
 	deps := api.Deps{Config: cfg, MainDB: a.accounts.DB, Users: a.users, Accounts: a.accounts, Logger: log}
-	if gen := ai.NewClaude(cfg.AnthropicAPIKey, cfg.AIModel); gen != nil {
+	gen, provider, err := ai.New(ai.Config{Provider: cfg.AIProvider, AnthropicKey: cfg.AnthropicAPIKey, DeepSeekKey: cfg.DeepSeekAPIKey, Model: cfg.AIModel})
+	switch {
+	case err != nil:
+		log.Error("AI card generation off", "err", err)
+	case gen != nil:
 		deps.AI = gen
-		log.Info("AI card generation enabled", "model", cmp.Or(cfg.AIModel, ai.DefaultModel))
-	} else {
-		log.Info("AI card generation off (set ANTHROPIC_API_KEY to enable)")
+		log.Info("AI card generation enabled", "provider", provider, "model", gen.(interface{ ModelName() string }).ModelName())
+	case provider != "":
+		log.Warn("AI card generation off: the API key for the selected provider is empty", "provider", provider)
+	default:
+		log.Info("AI card generation off (set ANTHROPIC_API_KEY or DEEPSEEK_API_KEY to enable)")
 	}
 	srv, err := api.New(ctx, deps)
 	if err != nil {

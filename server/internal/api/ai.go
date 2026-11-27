@@ -19,6 +19,9 @@ func (s *Server) aiModel() string {
 	if s.ai == nil {
 		return ""
 	}
+	if m, ok := s.ai.(interface{ ModelName() string }); ok {
+		return m.ModelName()
+	}
 	if s.cfg.AIModel != "" {
 		return s.cfg.AIModel
 	}

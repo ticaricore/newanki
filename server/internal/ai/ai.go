@@ -1,4 +1,4 @@
-// Package ai generates flashcard content with the Claude API.
+// Package ai generates flashcard content with the Claude API or DeepSeek.
 package ai
 
 import (
@@ -83,6 +83,52 @@ func NewClaude(apiKey, model string) *Claude {
 		model = DefaultModel
 	}
 	return &Claude{client: anthropic.NewClient(option.WithAPIKey(apiKey)), model: model}
+}
+
+// ModelName is the configured model.
+func (c *Claude) ModelName() string { return c.model }
+
+// Providers.
+const (
+	ProviderAnthropic = "anthropic"
+	ProviderDeepSeek  = "deepseek"
+)
+
+// Config picks the provider. An empty Provider means: Anthropic if its key is set, else DeepSeek.
+type Config struct {
+	Provider     string
+	AnthropicKey string
+	DeepSeekKey  string
+	Model        string // overrides the provider's default model
+}
+
+// New returns the configured generator, or nil (AI off) when the chosen provider has no key.
+// It also reports the provider it chose.
+func New(c Config) (Generator, string, error) {
+	p := strings.ToLower(strings.TrimSpace(c.Provider))
+	if p == "" {
+		switch {
+		case strings.TrimSpace(c.AnthropicKey) != "":
+			p = ProviderAnthropic
+		case strings.TrimSpace(c.DeepSeekKey) != "":
+			p = ProviderDeepSeek
+		default:
+			return nil, "", nil
+		}
+	}
+	switch p {
+	case ProviderAnthropic, "claude":
+		if g := NewClaude(c.AnthropicKey, c.Model); g != nil {
+			return g, ProviderAnthropic, nil
+		}
+		return nil, ProviderAnthropic, nil
+	case ProviderDeepSeek:
+		if g := NewDeepSeek(c.DeepSeekKey, c.Model); g != nil {
+			return g, ProviderDeepSeek, nil
+		}
+		return nil, ProviderDeepSeek, nil
+	}
+	return nil, p, fmt.Errorf("unknown AI provider %q (use anthropic or deepseek)", c.Provider)
 }
 
 // LangName turns a language code into the English name used in the prompt.

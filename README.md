@@ -21,11 +21,14 @@ Mobil öncelikli aralıklı tekrar (SRS) PWA'sı. Go + SQLite arka uç, React + 
 
 ## AI ile kart üretme
 
-- Sunucuyu `ANTHROPIC_API_KEY` ortam değişkeniyle başlatınca açılır (anahtar yalnızca sunucuda durur, tarayıcıya gitmez). Model varsayılan olarak `claude-opus-5-5`; `NEWANKI_AI_MODEL` ile değiştirilebilir.
+- Sunucuyu bir AI anahtarıyla başlatınca açılır (anahtar yalnızca sunucuda durur, tarayıcıya gitmez):
+  - **Claude:** `ANTHROPIC_API_KEY`. Varsayılan model `claude-opus-5-5`.
+  - **DeepSeek:** `DEEPSEEK_API_KEY`. Varsayılan model `deepseek-flash` (`deepseek-v4-pro` da seçilebilir). JSON modu şemayı zorlamadığı için yanıt sunucuda doğrulanır; boş yanıt bir kez yeniden denenir.
+  - İki anahtar da varsa Claude kullanılır; `NEWANKI_AI_PROVIDER=deepseek` ile seçim zorlanabilir. Model `NEWANKI_AI_MODEL` ile değiştirilebilir.
 - **Tek kelime:** anlam, IPA, tür, örnek cümle ve çevirisi, eş anlamlılar önerilir; düzenleyip "Karta dönüştür" ile desteye eklenir.
 - **Konu veya metin:** 5–30 kelime kartı önerilir. Destede zaten olan kelimeler isteğe eklenir ve tekrar önerilmez; destelerde bulunanlar "zaten var" diye işaretlenir.
 - Yönetim panelinden açılıp kapatılabilir ve kullanıcı başına günlük istek sınırı (varsayılan 30) ayarlanır. Panel o günkü istek, kart ve token sayısını gösterir.
-- Güvenlik sınıflandırıcısının reddettiği istekler sunucu tarafı yedek modelle (`fallbacks: "default"`) tekrar denenir.
+- Claude'da güvenlik sınıflandırıcısının reddettiği istekler sunucu tarafı yedek modelle (`fallbacks: "default"`) tekrar denenir.
 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... make dev

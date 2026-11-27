@@ -19,7 +19,9 @@ type Config struct {
 	// AnthropicAPIKey enables AI card generation. Read from ANTHROPIC_API_KEY only (no flag, so the
 	// key never shows up in the process list).
 	AnthropicAPIKey string
-	AIModel         string // NEWANKI_AI_MODEL, default ai.DefaultModel
+	DeepSeekAPIKey  string // DEEPSEEK_API_KEY, same rules
+	AIProvider      string // NEWANKI_AI_PROVIDER: anthropic | deepseek; empty = whichever key is set
+	AIModel         string // NEWANKI_AI_MODEL, default depends on the provider
 }
 
 // Load parses flags from args, with environment variables as defaults.
@@ -37,6 +39,8 @@ func Load(args []string) (Config, error) {
 		return c, err
 	}
 	c.AnthropicAPIKey = os.Getenv("ANTHROPIC_API_KEY")
+	c.DeepSeekAPIKey = os.Getenv("DEEPSEEK_API_KEY")
+	c.AIProvider = os.Getenv("NEWANKI_AI_PROVIDER")
 	c.AIModel = os.Getenv("NEWANKI_AI_MODEL")
 	if *secure == "" {
 		c.CookieSecure = !c.Dev

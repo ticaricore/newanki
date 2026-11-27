@@ -218,7 +218,7 @@ function GlobalSettings() {
             {stats?.ai_configured ? (
               <div className="text-[11px] text-na-text-3">Bugün {stats.ai_requests_today} istek · {stats.ai_cards_today} kart · {stats.ai_tokens_today.toLocaleString('tr-TR')} token</div>
             ) : (
-              <div className="text-[11px] leading-normal text-na-text-3">Açmak için sunucuyu <span className="na-mono">ANTHROPIC_API_KEY</span> ortam değişkeniyle başlatın.</div>
+              <div className="text-[11px] leading-normal text-na-text-3">Açmak için sunucuyu <span className="na-mono">ANTHROPIC_API_KEY</span> veya <span className="na-mono">DEEPSEEK_API_KEY</span> ortam değişkeniyle başlatın.</div>
             )}
             <div className="grid grid-cols-2 items-end gap-2.5">
               <GlassSegment<'on' | 'off'> full ariaLabel="AI ile üretme" value={aiOn} onChange={setAiOn} options={[{ value: 'on', label: 'Açık' }, { value: 'off', label: 'Kapalı' }]} />
