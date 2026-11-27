@@ -79,4 +79,4 @@ docker run -p 8080:8080 -v newanki-data:/var/lib/newanki -e ANTHROPIC_API_KEY=..
 Diğer komutlar:
 
 - `newanki migrate -data …` — tüm kullanıcı veritabanlarını güncel şemaya taşır (normalde açılışta otomatik yapılır).
-- `newanki admin reset-password -email x -data …` — şifre sıfırlar; kullanıcı ilk girişte değiştirir.
+- `newanki admin reset-password -email x -data …` — şifre sıfırlar; girilen şifre doğrudan geçerli olur.

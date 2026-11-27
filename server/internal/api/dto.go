@@ -313,7 +313,7 @@ type AdminUserCreate struct {
 	Name               string `json:"name"`
 	Password           string `json:"password"`
 	Role               string `json:"role"`
-	MustChangePassword *bool  `json:"must_change_password,omitempty" tstype:",optional"` // default true
+	MustChangePassword *bool  `json:"must_change_password,omitempty" tstype:",optional"` // default false
 }
 
 // AdminUserPatch is the body of PATCH /admin/users/{uid}.

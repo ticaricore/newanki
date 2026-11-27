@@ -97,11 +97,11 @@ function CreateUserSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
   }, [open])
   const err = create.error instanceof ApiError ? create.error : null
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Kullanıcı ekle" description="Kullanıcı ilk girişte şifresini değiştirmek zorunda kalır.">
-      <form className="flex flex-col gap-4 pb-2" onSubmit={(e) => { e.preventDefault(); create.mutate({ ...v, must_change_password: true }, { onSuccess: () => onOpenChange(false) }) }}>
+    <Sheet open={open} onOpenChange={onOpenChange} title="Kullanıcı ekle" description="Kullanıcı bu şifreyle giriş yapar; isterse sonra Ayarlar'dan değiştirir.">
+      <form className="flex flex-col gap-4 pb-2" onSubmit={(e) => { e.preventDefault(); create.mutate({ ...v, must_change_password: false }, { onSuccess: () => onOpenChange(false) }) }}>
         <TextInput label="Ad soyad" name="name" value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} error={err?.fields.name} autoComplete="off" />
         <TextInput label="E-posta" name="email" type="email" inputMode="email" autoCapitalize="none" value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} error={err?.fields.email} autoComplete="off" />
-        <PasswordInput label="Geçici şifre" name="password" autoComplete="new-password" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} error={err?.fields.password} />
+        <PasswordInput label="Şifre" name="password" autoComplete="new-password" value={v.password} onChange={(e) => setV({ ...v, password: e.target.value })} error={err?.fields.password} />
         <div>
           <div className="na-label mb-2">Rol</div>
           <GlassSegment<'user' | 'admin'> full value={v.role} onChange={(role) => setV({ ...v, role })} options={[{ value: 'user', label: 'Kullanıcı' }, { value: 'admin', label: 'Admin' }]} />
@@ -144,7 +144,7 @@ function UserSheet({ user, self, onClose }: { user: AdminUserDTO | null; self: b
           <GlassCard className="flex flex-col gap-2.5 p-3.5" radius={16}>
             <PasswordInput label="Şifre sıfırla" name="reset" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} error={err?.fields.password} />
             <Button disabled={password.length < 8 || patch.isPending} onClick={() => run({ uid: user.uid, password })}>Yeni şifreyi ata</Button>
-            <div className="text-[11px] text-na-text-3">{self ? 'Kendi şifreniz hemen değişir.' : 'Kullanıcının oturumları kapanır; ilk girişte şifreyi değiştirmesi istenir.'}</div>
+            <div className="text-[11px] text-na-text-3">{self ? 'Kendi şifreniz hemen değişir.' : 'Kullanıcının oturumları kapanır; yeni şifreyle giriş yapar.'}</div>
           </GlassCard>
           <FormError message={err && !err.fields.password ? err.message : null} />
           {!self ? <Button variant="danger" icon="trash" className="w-full" onClick={() => setConfirm(true)}>Kullanıcıyı sil</Button> : null}

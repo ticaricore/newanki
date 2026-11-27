@@ -39,7 +39,7 @@ func (s *Server) handleAdminCreateUser(w http.ResponseWriter, r *http.Request, r
 	if err := decodeJSON(w, r, &in); err != nil {
 		return err
 	}
-	mustChange := true
+	mustChange := false // the password the admin sets is the user's password
 	if in.MustChangePassword != nil {
 		mustChange = *in.MustChangePassword
 	}
@@ -120,7 +120,7 @@ func (s *Server) handleAdminPatchUser(w http.ResponseWriter, r *http.Request, rc
 		}
 	}
 	if in.Password != nil {
-		if err := s.accounts.SetPassword(r.Context(), u.ID, *in.Password, !self); err != nil {
+		if err := s.accounts.SetPassword(r.Context(), u.ID, *in.Password, false); err != nil {
 			return err
 		}
 		if !self {

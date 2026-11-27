@@ -241,13 +241,13 @@ func admin(args []string, log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	if err := a.accounts.SetPassword(ctx, u.ID, pw, true); err != nil {
+	if err := a.accounts.SetPassword(ctx, u.ID, pw, false); err != nil {
 		return err
 	}
 	if err := a.mainDB.DeleteUserSessions(ctx, u.ID); err != nil {
 		return err
 	}
-	log.Info("password reset; user must change it at next login", "email", u.Email)
+	log.Info("password reset", "email", u.Email)
 	return nil
 }
 

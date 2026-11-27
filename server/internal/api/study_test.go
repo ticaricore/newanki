@@ -106,3 +106,28 @@ func TestReviewBatch(t *testing.T) {
 	}
 	c.must(400, "GET", "/study/queue?ahead_days=8", nil, nil)
 }
+
+// Passwords set by an admin are final: no forced change on first login or after a reset.
+func TestAdminSetPasswordIsFinal(t *testing.T) {
+	e := newEnv(t)
+	admin := e.client()
+	admin.must(200, "POST", "/auth/login", LoginRequest{Email: "admin@newanki.local", Password: "Admin123!"}, nil)
+	var u AdminUserDTO
+	admin.must(201, "POST", "/admin/users", AdminUserCreate{Email: "ali@example.com", Name: "Ali", Password: "Parola123", Role: "user"}, &u)
+
+	c := e.client()
+	var me MeResponse
+	c.must(200, "POST", "/auth/login", LoginRequest{Email: "ali@example.com", Password: "Parola123"}, &me)
+	if me.User.MustChangePassword {
+		t.Fatal("new user must not be forced to change the password")
+	}
+	c.must(200, "GET", "/decks", nil, nil)
+
+	pw := "Baska-Parola-1"
+	admin.must(200, "PATCH", "/admin/users/"+u.UID, AdminUserPatch{Password: &pw}, nil)
+	c = e.client()
+	c.must(200, "POST", "/auth/login", LoginRequest{Email: "ali@example.com", Password: pw}, &me)
+	if me.User.MustChangePassword {
+		t.Fatal("reset password must not force a change")
+	}
+}
